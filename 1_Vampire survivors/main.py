@@ -3,6 +3,7 @@ import random
 import math
 from pygame.math import Vector2
 from upgrades import upgrade_gun, upgrade_blob, upgrade_heavy
+from config import ENEMY_STATS, BOSS_STATS, ITEM_STATS, DROP_PROBABILITIES
 
 # Initialize Pygame
 pygame.init()
@@ -26,13 +27,26 @@ def load_sprite(filename, size=None):
 
 wizard_sprite = load_sprite("wizard.png", (50, 50))
 fire_sprite = load_sprite("icons8-fire-96.png", (30, 30))
-zombie_sprite = load_sprite("icons8-zombie-64.png", (45, 45))
-vampire_sprite = load_sprite("icons8-vampire-64.png", (45, 45))
-golem_sprite = load_sprite("icons8-golem-64.png", (55, 55))
-devil_sprite = load_sprite("icons8-devil-64.png", (100, 100))
-cerberus_sprite = load_sprite("icons8-cerberus-64.png", (120, 120))
-gem_sprite = load_sprite("icons8-gem-96.png", (20, 20))
-mana_sprite = load_sprite("icons8-mana-100.png", (20, 20))
+zombie_sprite = load_sprite("icons8-zombie-64.png", ENEMY_STATS["normal"]["sprite_size"])
+vampire_sprite = load_sprite("icons8-vampire-64.png", ENEMY_STATS["fast"]["sprite_size"])
+golem_sprite = load_sprite("icons8-golem-64.png", ENEMY_STATS["strong"]["sprite_size"])
+
+# Boss sprites
+bigfoot_sprite = load_sprite("icons8-bigfoot-64.png", BOSS_STATS[100]["bigfoot"]["sprite_size"])
+minotaur_sprite = load_sprite("icons8-minotaur-64.png", BOSS_STATS[100]["minotaur"]["sprite_size"])
+cyclops_sprite = load_sprite("icons8-cyclops-64.png", BOSS_STATS[200]["cyclops"]["sprite_size"])
+giant_sprite = load_sprite("icons8-giant-64.png", BOSS_STATS[200]["giant"]["sprite_size"])
+monster_sprite = load_sprite("icons8-monster-64.png", BOSS_STATS[200]["monster"]["sprite_size"])
+cerberus_sprite = load_sprite("icons8-cerberus-64.png", BOSS_STATS[300]["cerberus"]["sprite_size"])
+chimera_sprite = load_sprite("icons8-chimera-64.png", BOSS_STATS[300]["chimera"]["sprite_size"])
+medusa_sprite = load_sprite("icons8-medusa-64.png", BOSS_STATS[400]["medusa"]["sprite_size"])
+echidna_sprite = load_sprite("icons8-echidna-64.png", BOSS_STATS[401]["echidna"]["sprite_size"])
+devil_sprite = load_sprite("icons8-devil-64.png", BOSS_STATS[500]["devil"]["sprite_size"])
+
+# Item sprites
+gem_sprite = load_sprite("icons8-gem-96.png", ITEM_STATS["gem"]["sprite_size"])
+mana_sprite = load_sprite("icons8-mana-100.png", ITEM_STATS["mana"]["sprite_size"])
+emerald_sprite = load_sprite("icons8-emerald-64.png", ITEM_STATS["emerald"]["sprite_size"])
 
 # Colors
 BLACK = (0, 0, 0)
@@ -54,14 +68,7 @@ enemies = pygame.sprite.Group()
 projectiles = pygame.sprite.Group()
 items = pygame.sprite.Group()
 
-# Screen rectangle for boundary checking
 screen_rect = screen.get_rect()
-
-DROP_PROBABILITIES = {
-    "gem": 0.5,
-    "mana": 0.4,
-    "health": 0.1
-}
 
 ### Player Class
 class Player(pygame.sprite.Sprite):
@@ -94,34 +101,66 @@ class Player(pygame.sprite.Sprite):
         for weapon in self.weapons:
             weapon.update(dt)
 
-### Enemy Classes
 class Enemy(pygame.sprite.Sprite):
-    def __init__(self, pos, enemy_type="normal", player_level=1):
+    def __init__(self, pos, enemy_type="normal", player_level=1, boss_name=None):
         super().__init__()
         self.enemy_type = enemy_type
+        self.boss_name = boss_name
         
-        if enemy_type == "normal":
-            self.image = zombie_sprite.copy()
-            self.speed = 50
-            self.health = 20
-            self.damage_rate = 20  # 1 damage per second
-        elif enemy_type == "fast":
-            self.image = vampire_sprite.copy()
-            self.speed = 200
-            self.health = 10 + player_level
-            self.damage_rate = 10  # 0.5 damage per second
-        elif enemy_type == "strong":
-            self.image = golem_sprite.copy()
-            self.speed = 100
-            self.health = 100 + 3 * player_level
-            self.damage_rate = 30  # 2 damage per second
-        elif enemy_type == "boss":
-            # Randomly choose between devil and cerberus for boss
-            boss_sprites = [devil_sprite, cerberus_sprite]
-            self.image = random.choice(boss_sprites).copy()
-            self.speed = 200
-            self.health = 500 + 10 * player_level
-            self.damage_rate = 50  # 5 damage per second
+        if enemy_type in ENEMY_STATS:
+            stats = ENEMY_STATS[enemy_type]
+            if enemy_type == "normal":
+                self.image = zombie_sprite.copy()
+                self.speed = stats["speed"]
+                self.health = stats["health"]
+                self.damage_rate = stats["damage_rate"]
+            elif enemy_type == "fast":
+                self.image = vampire_sprite.copy()
+                self.speed = stats["speed"]
+                self.health = stats["health"] + player_level
+                self.damage_rate = stats["damage_rate"]
+            elif enemy_type == "strong":
+                self.image = golem_sprite.copy()
+                self.speed = stats["speed"]
+                self.health = stats["health"] + 3 * player_level
+                self.damage_rate = stats["damage_rate"]
+        elif enemy_type == "boss" and boss_name:
+            # Find boss stats from any kill milestone
+            boss_stats = None
+            for milestone_bosses in BOSS_STATS.values():
+                if boss_name in milestone_bosses:
+                    boss_stats = milestone_bosses[boss_name]
+                    break
+            
+            if boss_stats:
+                sprite_map = {
+                    "bigfoot": bigfoot_sprite,
+                    "minotaur": minotaur_sprite,
+                    "cyclops": cyclops_sprite,
+                    "giant": giant_sprite,
+                    "monster": monster_sprite,
+                    "cerberus": cerberus_sprite,
+                    "chimera": chimera_sprite,
+                    "medusa": medusa_sprite,
+                    "echidna": echidna_sprite,
+                    "devil": devil_sprite
+                }
+                
+                self.image = sprite_map[boss_name].copy()
+                self.speed = boss_stats["speed"]
+                self.damage_rate = boss_stats["damage_rate"]
+                
+                # Calculate health based on boss type
+                if boss_name in ["bigfoot", "minotaur"]:
+                    self.health = boss_stats["health"] + 5 * player_level
+                elif boss_name in ["cyclops", "giant", "monster"]:
+                    self.health = boss_stats["health"] + 8 * player_level
+                elif boss_name in ["cerberus", "chimera"]:
+                    self.health = boss_stats["health"] + 10 * player_level
+                elif boss_name in ["medusa", "echidna"]:
+                    self.health = boss_stats["health"] + 12 * player_level
+                elif boss_name == "devil":
+                    self.health = boss_stats["health"] + 15 * player_level
         
         self.rect = self.image.get_rect(center=pos)
         self.pos = Vector2(pos)
@@ -182,22 +221,22 @@ class ExpItem(pygame.sprite.Sprite):
         super().__init__()
         self.image = gem_sprite.copy()
         self.rect = self.image.get_rect(center=pos)
-        self.value = 1
+        self.value = ITEM_STATS["gem"]["experience_value"]
 
 class ManaItem(pygame.sprite.Sprite):
     def __init__(self, pos):
         super().__init__()
         self.image = mana_sprite.copy()
         self.rect = self.image.get_rect(center=pos)
-        self.value = 2
+        self.value = ITEM_STATS["mana"]["experience_value"]
 
 class HealthItem(pygame.sprite.Sprite):
     def __init__(self, pos):
         super().__init__()
-        self.image = pygame.Surface((15, 15))
-        self.image.fill(GREEN)
+        self.image = emerald_sprite.copy()
         self.rect = self.image.get_rect(center=pos)
-        self.value = random.randint(5, 15)
+        health_range = ITEM_STATS["emerald"]["health_value"]
+        self.value = random.randint(health_range[0], health_range[1])
 
 ### Weapon Classes
 class Gun:
@@ -445,10 +484,10 @@ while running:
                         projectile.hit_enemies.add(enemy)
                         if enemy.health <= 0:
                             enemy.kill()
-                            drop = random.choices(["gem", "mana", "health"], 
+                            drop = random.choices(["gem", "mana", "emerald"], 
                                                   weights=[DROP_PROBABILITIES["gem"], 
                                                            DROP_PROBABILITIES["mana"],
-                                                           DROP_PROBABILITIES["health"]], 
+                                                           DROP_PROBABILITIES["emerald"]], 
                                                   k=1)[0]
                             if drop == "gem":
                                 item = ExpItem(enemy.rect.center)
@@ -459,7 +498,23 @@ while running:
                             all_sprites.add(item)
                             items.add(item)
                             player.kill_count += 1
-                            if player.kill_count in [100, 200, 300, 400, 401]:
+                            
+                            # Boss spawning logic
+                            boss_name = None
+                            if player.kill_count == 100:
+                                boss_name = random.choice(["bigfoot", "minotaur"])
+                            elif player.kill_count == 200:
+                                boss_name = random.choice(["cyclops", "giant", "monster"])
+                            elif player.kill_count == 300:
+                                boss_name = random.choice(["cerberus", "chimera"])
+                            elif player.kill_count == 400:
+                                boss_name = "medusa"
+                            elif player.kill_count == 401:
+                                boss_name = "echidna"
+                            elif player.kill_count == 500:
+                                boss_name = "devil"
+                            
+                            if boss_name:
                                 side = random.choice(['top', 'bottom', 'left', 'right'])
                                 if side == 'top':
                                     pos = (random.randint(0, screen_width), -50)
@@ -469,9 +524,14 @@ while running:
                                     pos = (-50, random.randint(0, screen_height))
                                 else:
                                     pos = (screen_width + 50, random.randint(0, screen_height))
-                                boss = Enemy(pos, "boss", player.level)
+                                boss = Enemy(pos, "boss", player.level, boss_name)
                                 all_sprites.add(boss)
                                 enemies.add(boss)
+                            
+                            # Check if devil is killed
+                            if enemy.enemy_type == "boss" and enemy.boss_name == "devil":
+                                game_state = "end"
+                                game_result = "win"
                 if projectile.angle >= 2 * math.pi:
                     projectile.hit_enemies.clear()
                     projectile.angle -= 2 * math.pi
@@ -485,10 +545,10 @@ while running:
                             projectile.kill()
                         if enemy.health <= 0:
                             enemy.kill()
-                            drop = random.choices(["gem", "mana", "health"], 
+                            drop = random.choices(["gem", "mana", "emerald"], 
                                                   weights=[DROP_PROBABILITIES["gem"], 
                                                            DROP_PROBABILITIES["mana"],
-                                                           DROP_PROBABILITIES["health"]], 
+                                                           DROP_PROBABILITIES["emerald"]], 
                                                   k=1)[0]
                             if drop == "gem":
                                 item = ExpItem(enemy.rect.center)
@@ -499,7 +559,23 @@ while running:
                             all_sprites.add(item)
                             items.add(item)
                             player.kill_count += 1
-                            if player.kill_count in [100, 200, 300, 401]:
+                            
+                            # Boss spawning logic
+                            boss_name = None
+                            if player.kill_count == 100:
+                                boss_name = random.choice(["bigfoot", "minotaur"])
+                            elif player.kill_count == 200:
+                                boss_name = random.choice(["cyclops", "giant", "monster"])
+                            elif player.kill_count == 300:
+                                boss_name = random.choice(["cerberus", "chimera"])
+                            elif player.kill_count == 400:
+                                boss_name = "medusa"
+                            elif player.kill_count == 401:
+                                boss_name = "echidna"
+                            elif player.kill_count == 500:
+                                boss_name = "devil"
+                            
+                            if boss_name:
                                 side = random.choice(['top', 'bottom', 'left', 'right'])
                                 if side == 'top':
                                     pos = (random.randint(0, screen_width), -50)
@@ -509,9 +585,14 @@ while running:
                                     pos = (-50, random.randint(0, screen_height))
                                 else:
                                     pos = (screen_width + 50, random.randint(0, screen_height))
-                                boss = Enemy(pos, "boss", player.level)
+                                boss = Enemy(pos, "boss", player.level, boss_name)
                                 all_sprites.add(boss)
                                 enemies.add(boss)
+                            
+                            # Check if devil is killed
+                            if enemy.enemy_type == "boss" and enemy.boss_name == "devil":
+                                game_state = "end"
+                                game_result = "win"
                         break
 
         for item in items:
@@ -524,11 +605,12 @@ while running:
                         player.exp_to_next_level = player.level
                         game_state = "upgrading"
                 elif isinstance(item, ManaItem):
-                    player.experience = 0
-                    player.health = 100
-                    player.level += 1
-                    player.exp_to_next_level = player.level
-                    game_state = "upgrading"
+                    player.experience += item.value
+                    if player.experience >= player.exp_to_next_level:
+                        player.level += 1
+                        player.experience -= player.exp_to_next_level
+                        player.exp_to_next_level = player.level
+                        game_state = "upgrading"
                 elif isinstance(item, HealthItem):
                     player.health = min(100, player.health + item.value)
                 item.kill()
