@@ -454,7 +454,7 @@ def check_collision_with_enemies(player):
 
 def create_boss_drops(center_pos):
     """Create 1-5 random items when a boss dies"""
-    num_drops = random.randint(1, 5)
+    num_drops = random.randint(5,10)
     items_created = []
     
     for i in range(num_drops):
@@ -502,7 +502,9 @@ while running:
             if event.key == pygame.K_ESCAPE:
                 running = False
             elif event.key == pygame.K_q:
-                if game_state not in ["quit_confirm", "end"]:
+                if game_state == "end":
+                    running = False  # Direct quit when game is over
+                elif game_state != "quit_confirm":
                     game_state = "quit_confirm"
             if game_state == "quit_confirm":
                 if event.key == pygame.K_y:

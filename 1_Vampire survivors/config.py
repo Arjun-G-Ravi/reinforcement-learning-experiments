@@ -48,41 +48,41 @@ BOSS_STATS = {
     200: {
         "cyclops": {
             "speed": 40,
-            "health": 600,  # + 8 * player_level
-            "damage_rate": 70,
+            "health": 1000,  # + 8 * player_level
+            "damage_rate": 200,
             "sprite_size": (160, 160)
         },
         "giant": {
             "speed": 20,
             "health": 1000,  # + 8 * player_level
-            "damage_rate": 55,
+            "damage_rate": 200,
             "sprite_size": (160, 160)
         },
         "monster": {
             "speed": 40,
-            "health": 650,  # + 8 * player_level
-            "damage_rate": 65,
+            "health": 1000,  # + 8 * player_level
+            "damage_rate": 200,
             "sprite_size": (130, 130)
         }
     },
     300: {
         "cerberus": {
-            "speed": 120,
+            "speed": 140,
             "health": 1000,  # + 10 * player_level
-            "damage_rate": 120,
+            "damage_rate": 140,
             "sprite_size": (130, 130)
         },
         "chimera": {
             "speed": 120,
-            "health": 750,  # + 10 * player_level
+            "health": 1000,  # + 10 * player_level
             "damage_rate": 160,
             "sprite_size": (125, 125)
         }
     },
     400: {
         "medusa": {
-            "speed": 120,
-            "health": 1500,  # + 12 * player_level
+            "speed": 130,
+            "health": 2000,  # + 12 * player_level
             "damage_rate": 100,
             "sprite_size": (140, 140)
         }
@@ -90,15 +90,15 @@ BOSS_STATS = {
     401: {
         "echidna": {
             "speed": 50,
-            "health": 2000,  # + 12 * player_level
+            "health": 3000,  # + 12 * player_level
             "damage_rate": 110,
-            "sprite_size": (140, 140)
+            "sprite_size": (180, 180)
         }
     },
     500: {
         "devil": {
             "speed": 150,
-            "health": 3000,  # + 15 * player_level
+            "health": 4000,  # + 15 * player_level
             "damage_rate": 200,
             "sprite_size": (150, 150)
         }
@@ -123,9 +123,9 @@ ITEM_STATS = {
 
 # Drop probabilities
 DROP_PROBABILITIES = {
-    "gem": 0.7,
-    "mana": 0.04,
-    "emerald": 0.05
+    "gem": 0.6,
+    "mana": 0.05,
+    "emerald": 0.02
 }
 
 # Weapon upgrades
