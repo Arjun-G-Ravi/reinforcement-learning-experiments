@@ -7,12 +7,32 @@ from upgrades import upgrade_gun, upgrade_blob, upgrade_heavy
 # Initialize Pygame
 pygame.init()
 
-# Screen setup
-screen_width = 800
-screen_height = 600
+screen_width = 1200
+screen_height = 800
 screen = pygame.display.set_mode((screen_width, screen_height))
-pygame.display.set_caption("Vampire Survivors Clone")
+pygame.display.set_caption("Wizard Survivors")
 clock = pygame.time.Clock()
+
+def load_sprite(filename, size=None):
+    try:
+        image = pygame.image.load(filename).convert_alpha()
+        if size:
+            image = pygame.transform.scale(image, size)
+        return image
+    except pygame.error:
+        surface = pygame.Surface(size if size else (50, 50))
+        surface.fill(WHITE)
+        return surface
+
+wizard_sprite = load_sprite("wizard.png", (50, 50))
+fire_sprite = load_sprite("icons8-fire-96.png", (30, 30))
+zombie_sprite = load_sprite("icons8-zombie-64.png", (45, 45))
+vampire_sprite = load_sprite("icons8-vampire-64.png", (45, 45))
+golem_sprite = load_sprite("icons8-golem-64.png", (55, 55))
+devil_sprite = load_sprite("icons8-devil-64.png", (100, 100))
+cerberus_sprite = load_sprite("icons8-cerberus-64.png", (120, 120))
+gem_sprite = load_sprite("icons8-gem-96.png", (20, 20))
+mana_sprite = load_sprite("icons8-mana-100.png", (20, 20))
 
 # Colors
 BLACK = (0, 0, 0)
@@ -24,10 +44,9 @@ YELLOW = (255, 255, 0)
 GRAY = (50, 50, 50)
 LIGHT_GRAY = (100, 100, 100)
 
-# Font setup
-font = pygame.font.SysFont(None, 22)
-large_font = pygame.font.SysFont(None, 48)
-kill_font = pygame.font.SysFont(None, 36)  # Larger font for kill count
+font = pygame.font.SysFont(None, 28)
+large_font = pygame.font.SysFont(None, 60)
+kill_font = pygame.font.SysFont(None, 42)
 
 # Sprite groups
 all_sprites = pygame.sprite.Group()
@@ -38,18 +57,17 @@ items = pygame.sprite.Group()
 # Screen rectangle for boundary checking
 screen_rect = screen.get_rect()
 
-# Drop probabilities
 DROP_PROBABILITIES = {
-    "experience": 0.6,  # 70% chance
-    "health": 0.03      # 3% chance
+    "gem": 0.5,
+    "mana": 0.4,
+    "health": 0.1
 }
 
 ### Player Class
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        self.image = pygame.Surface((30, 30))
-        self.image.fill(WHITE)
+        self.image = wizard_sprite.copy()
         self.rect = self.image.get_rect(center=(screen_width / 2, screen_height / 2))
         self.pos = Vector2(self.rect.center)
         self.speed = 300
@@ -81,28 +99,30 @@ class Enemy(pygame.sprite.Sprite):
     def __init__(self, pos, enemy_type="normal", player_level=1):
         super().__init__()
         self.enemy_type = enemy_type
-        self.image = pygame.Surface((20, 20))
+        
         if enemy_type == "normal":
-            self.image.fill(GREEN)
+            self.image = zombie_sprite.copy()
             self.speed = 50
             self.health = 20
             self.damage_rate = 20  # 1 damage per second
         elif enemy_type == "fast":
-            self.image.fill(RED)
+            self.image = vampire_sprite.copy()
             self.speed = 200
             self.health = 10 + player_level
             self.damage_rate = 10  # 0.5 damage per second
         elif enemy_type == "strong":
-            self.image.fill(BLUE)
+            self.image = golem_sprite.copy()
             self.speed = 100
             self.health = 100 + 3 * player_level
             self.damage_rate = 30  # 2 damage per second
         elif enemy_type == "boss":
-            self.image = pygame.Surface((70, 70))
-            self.image.fill(YELLOW)
+            # Randomly choose between devil and cerberus for boss
+            boss_sprites = [devil_sprite, cerberus_sprite]
+            self.image = random.choice(boss_sprites).copy()
             self.speed = 200
             self.health = 500 + 10 * player_level
             self.damage_rate = 50  # 5 damage per second
+        
         self.rect = self.image.get_rect(center=pos)
         self.pos = Vector2(pos)
 
@@ -136,19 +156,17 @@ class Projectile(pygame.sprite.Sprite):
         if self.lifetime <= 0 or not screen_rect.contains(self.rect):
             self.kill()
 
-### Blob Class (Rotating Projectile)
 class Blob(pygame.sprite.Sprite):
     def __init__(self, pos, damage, speed):
         super().__init__()
-        self.size = 20
-        self.image = pygame.Surface((self.size, self.size))
-        self.image.fill(YELLOW)
+        self.size = 30
+        self.image = fire_sprite.copy()
         self.rect = self.image.get_rect(center=pos)
         self.pos = Vector2(pos)
         self.damage = damage
         self.rotation_speed = speed
         self.angle = 0
-        self.distance = 100
+        self.distance = 120
         self.hit_enemies = set()
 
     def update(self, dt):
@@ -159,22 +177,27 @@ class Blob(pygame.sprite.Sprite):
         )
         self.rect.center = self.pos
 
-### Item Classes
 class ExpItem(pygame.sprite.Sprite):
     def __init__(self, pos):
         super().__init__()
-        self.image = pygame.Surface((10, 10))
-        self.image.fill(BLUE)
+        self.image = gem_sprite.copy()
         self.rect = self.image.get_rect(center=pos)
         self.value = 1
+
+class ManaItem(pygame.sprite.Sprite):
+    def __init__(self, pos):
+        super().__init__()
+        self.image = mana_sprite.copy()
+        self.rect = self.image.get_rect(center=pos)
+        self.value = 2
 
 class HealthItem(pygame.sprite.Sprite):
     def __init__(self, pos):
         super().__init__()
-        self.image = pygame.Surface((10, 10))
+        self.image = pygame.Surface((15, 15))
         self.image.fill(GREEN)
         self.rect = self.image.get_rect(center=pos)
-        self.value = random.randint(1,10)
+        self.value = random.randint(5, 15)
 
 ### Weapon Classes
 class Gun:
@@ -241,6 +264,8 @@ class BlobWeapon:
             self.blob.rotation_speed = self.speed
         else:
             self.blob = Blob(self.player.pos, self.damage, self.speed)
+            # Scale the fire sprite to match the blob size
+            self.blob.image = pygame.transform.scale(fire_sprite, (self.blob.size, self.blob.size))
             all_sprites.add(self.blob)
             projectiles.add(self.blob)
 
@@ -254,8 +279,8 @@ class BlobWeapon:
                 self.blob.damage = self.damage
                 self.blob.rotation_speed = self.speed
                 self.blob.size = self.size
-                self.blob.image = pygame.Surface((self.size, self.size))
-                self.blob.image.fill(YELLOW)
+                # Scale the fire sprite to the new size
+                self.blob.image = pygame.transform.scale(fire_sprite, (self.size, self.size))
 
     def stats(self):
         return f"Blob (Lvl {self.level}/10): Dmg {self.damage}, Spd {self.speed:.1f}"
@@ -420,12 +445,15 @@ while running:
                         projectile.hit_enemies.add(enemy)
                         if enemy.health <= 0:
                             enemy.kill()
-                            drop = random.choices(["experience", "health"], 
-                                                  weights=[DROP_PROBABILITIES["experience"], 
+                            drop = random.choices(["gem", "mana", "health"], 
+                                                  weights=[DROP_PROBABILITIES["gem"], 
+                                                           DROP_PROBABILITIES["mana"],
                                                            DROP_PROBABILITIES["health"]], 
                                                   k=1)[0]
-                            if drop == "experience":
+                            if drop == "gem":
                                 item = ExpItem(enemy.rect.center)
+                            elif drop == "mana":
+                                item = ManaItem(enemy.rect.center)
                             else:
                                 item = HealthItem(enemy.rect.center)
                             all_sprites.add(item)
@@ -457,12 +485,15 @@ while running:
                             projectile.kill()
                         if enemy.health <= 0:
                             enemy.kill()
-                            drop = random.choices(["experience", "health"], 
-                                                  weights=[DROP_PROBABILITIES["experience"], 
+                            drop = random.choices(["gem", "mana", "health"], 
+                                                  weights=[DROP_PROBABILITIES["gem"], 
+                                                           DROP_PROBABILITIES["mana"],
                                                            DROP_PROBABILITIES["health"]], 
                                                   k=1)[0]
-                            if drop == "experience":
+                            if drop == "gem":
                                 item = ExpItem(enemy.rect.center)
+                            elif drop == "mana":
+                                item = ManaItem(enemy.rect.center)
                             else:
                                 item = HealthItem(enemy.rect.center)
                             all_sprites.add(item)
@@ -483,7 +514,6 @@ while running:
                                 enemies.add(boss)
                         break
 
-        # Player vs Items
         for item in items:
             if (player.pos - Vector2(item.rect.center)).length() < 50:
                 if isinstance(item, ExpItem):
@@ -493,6 +523,12 @@ while running:
                         player.experience -= player.exp_to_next_level
                         player.exp_to_next_level = player.level
                         game_state = "upgrading"
+                elif isinstance(item, ManaItem):
+                    player.experience = 0
+                    player.health = 100
+                    player.level += 1
+                    player.exp_to_next_level = player.level
+                    game_state = "upgrading"
                 elif isinstance(item, HealthItem):
                     player.health = min(100, player.health + item.value)
                 item.kill()
@@ -519,46 +555,42 @@ while running:
 
     if game_state == "upgrading":
         upgrade_rects = []
-        # pygame.draw.rect(screen, GRAY, (100, 200, 600, 200))
-        pygame.draw.rect(screen, GRAY, (50, 150, 700, 300))  # Larger box
+        pygame.draw.rect(screen, GRAY, (100, 200, 1000, 400))
         title_text = font.render("Level Up! Choose an upgrade:", True, WHITE)
-        screen.blit(title_text, (screen_width//2 - title_text.get_width()//2, 220))
+        screen.blit(title_text, (screen_width//2 - title_text.get_width()//2, 280))
 
-        # Calculate layout for 4 options (3 weapons + health)
-        button_width = 140  # Reduced width to fit 4 options
-        total_width = button_width * 4 + 20 * 3  # 4 buttons, 3 gaps
+        button_width = 200
+        total_width = button_width * 4 + 30 * 3
         start_x = (screen_width - total_width) // 2
         
-        # Weapon upgrades
         for i, weapon in enumerate(player.weapons):
-            x = start_x + i * (button_width + 20)
+            x = start_x + i * (button_width + 30)
             if weapon.level >= 10:
                 upgrade_text = font.render(f"{weapon.stats()} - MAXED OUT", True, WHITE)
-                text_rect = upgrade_text.get_rect(center=(x + button_width//2, 320))
-                button_rect = pygame.Rect(x, 280, button_width, 80)
+                text_rect = upgrade_text.get_rect(center=(x + button_width//2, 420))
+                button_rect = pygame.Rect(x, 350, button_width, 120)
                 pygame.draw.rect(screen, GRAY, button_rect)
                 screen.blit(upgrade_text, text_rect)
             else:
                 upgrade_text1 = font.render(f"{weapon.name}: Lv {weapon.level}", True, WHITE)
                 upgrade_text2 = font.render(f"Damage: {weapon.damage}", True, WHITE)
                 upgrade_text3 = font.render(f"Cooldown: {weapon.cooldown}", True, WHITE)
-                text_rect1 = upgrade_text1.get_rect(center=(x + button_width//2, 300-5))
-                text_rect2 = upgrade_text2.get_rect(center=(x + button_width//2, 325-5))
-                text_rect3 = upgrade_text3.get_rect(center=(x + button_width//2, 350-5))
-                button_rect = pygame.Rect(x, 280, button_width, 80)
+                text_rect1 = upgrade_text1.get_rect(center=(x + button_width//2, 380))
+                text_rect2 = upgrade_text2.get_rect(center=(x + button_width//2, 410))
+                text_rect3 = upgrade_text3.get_rect(center=(x + button_width//2, 440))
+                button_rect = pygame.Rect(x, 350, button_width, 120)
                 upgrade_rects.append(button_rect)
                 pygame.draw.rect(screen, LIGHT_GRAY, button_rect)
                 screen.blit(upgrade_text1, text_rect1)
                 screen.blit(upgrade_text2, text_rect2)
                 screen.blit(upgrade_text3, text_rect3)
 
-        # Health upgrade option (always available)
-        x = start_x + 3 * (button_width + 20)
+        x = start_x + 3 * (button_width + 30)
         health_text1 = font.render("Health", True, WHITE)
         health_text2 = font.render("+25", True, WHITE)
-        text_rect1 = health_text1.get_rect(center=(x + button_width//2, 310))
-        text_rect2 = health_text2.get_rect(center=(x + button_width//2, 340))
-        button_rect = pygame.Rect(x, 280, button_width, 80)
+        text_rect1 = health_text1.get_rect(center=(x + button_width//2, 400))
+        text_rect2 = health_text2.get_rect(center=(x + button_width//2, 430))
+        button_rect = pygame.Rect(x, 350, button_width, 120)
         upgrade_rects.append(button_rect)
         pygame.draw.rect(screen, LIGHT_GRAY, button_rect)
         screen.blit(health_text1, text_rect1)
@@ -577,35 +609,30 @@ while running:
         screen.blit(quit_text, (screen_width // 2 - quit_text.get_width() // 2, screen_height // 2 + 50))
 
     if game_state in ["playing", "upgrading"]:
-        # UI: Top-left - Health bar and text
-        health_bar_width = 150
-        health_bar_height = 10
-        health_ratio = max(0, player.health / 100)  # Health is 0 to 100, ratio 0 to 1
-        pygame.draw.rect(screen, RED, (5, 5, health_bar_width, health_bar_height))  # Background
-        pygame.draw.rect(screen, GREEN, (5, 5, health_bar_width * health_ratio, health_bar_height))  # Foreground
+        health_bar_width = 200
+        health_bar_height = 15
+        health_ratio = max(0, player.health / 100)
+        pygame.draw.rect(screen, RED, (10, 10, health_bar_width, health_bar_height))
+        pygame.draw.rect(screen, GREEN, (10, 10, health_bar_width * health_ratio, health_bar_height))
         health_text = font.render(f"Health: {int(max(0, player.health))}", True, WHITE)
-        screen.blit(health_text, (160, 5))  # Next to the bar
+        screen.blit(health_text, (220, 10))
         
-        # Level text
         level_text = font.render(f"Level: {player.level}", True, WHITE)
-        screen.blit(level_text, (5, 25))  # Below health bar
+        screen.blit(level_text, (10, 35))
         
-        # Experience bar
         exp_ratio = player.experience / player.exp_to_next_level if player.exp_to_next_level > 0 else 0
-        pygame.draw.rect(screen, BLUE, (5, 40, 150 * exp_ratio, 10))  # Adjusted position
+        pygame.draw.rect(screen, BLUE, (10, 55, 200 * exp_ratio, 15))
 
-        # UI: Top-center - Kill Count with larger font
         kill_text = kill_font.render(f"Kills: {player.kill_count}", True, WHITE)
-        screen.blit(kill_text, (screen_width // 2 - kill_text.get_width() // 2, 5))
+        screen.blit(kill_text, (screen_width // 2 - kill_text.get_width() // 2, 10))
 
-        # UI: Top-right - Weapon Stats
         for i, weapon in enumerate(player.weapons):
             if weapon.name == 'Heavy':
                 color = WHITE if weapon.ready else RED
             else:
                 color = WHITE
             stat_text = font.render(weapon.stats(), True, color)
-            screen.blit(stat_text, (screen_width - 250, 10 + i * 30))
+            screen.blit(stat_text, (screen_width - 350, 15 + i * 35))
 
     pygame.display.flip()
 
