@@ -7,6 +7,16 @@ from config import ENEMY_STATS, BOSS_STATS, ITEM_STATS, DROP_PROBABILITIES, upgr
 # Initialize Pygame
 pygame.init()
 
+# Colors
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
+YELLOW = (255, 255, 0)
+GRAY = (50, 50, 50)
+LIGHT_GRAY = (100, 100, 100)
+
 screen_width = 1200
 screen_height = 800
 screen = pygame.display.set_mode((screen_width, screen_height))
@@ -47,15 +57,9 @@ gem_sprite = load_sprite("icons8-gem-96.png", ITEM_STATS["gem"]["sprite_size"])
 mana_sprite = load_sprite("icons8-mana-100.png", ITEM_STATS["mana"]["sprite_size"])
 emerald_sprite = load_sprite("icons8-emerald-64.png", ITEM_STATS["emerald"]["sprite_size"])
 
-# Colors
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-RED = (255, 0, 0)
-GREEN = (0, 255, 0)
-BLUE = (0, 0, 255)
-YELLOW = (255, 255, 0)
-GRAY = (50, 50, 50)
-LIGHT_GRAY = (100, 100, 100)
+# Projectile sprites
+red_orb_sprite = load_sprite("red-orb.png", (15, 15))
+yellow_orb_sprite = load_sprite("yellow-orb.png", (20, 20))
 
 font = pygame.font.SysFont(None, 28)
 large_font = pygame.font.SysFont(None, 60)
@@ -172,10 +176,13 @@ class Enemy(pygame.sprite.Sprite):
         self.rect.center = self.pos
 
 class Projectile(pygame.sprite.Sprite):
-    def __init__(self, pos, direction, damage, color=RED, piercing=False):
+    def __init__(self, pos, direction, damage, color=RED, piercing=False, sprite=None):
         super().__init__()
-        self.image = pygame.Surface((5, 5))
-        self.image.fill(color)
+        if sprite:
+            self.image = sprite.copy()
+        else:
+            self.image = pygame.Surface((5, 5))
+            self.image.fill(color)
         self.rect = self.image.get_rect(center=pos)
         self.pos = Vector2(pos)
         self.velocity = direction * 500
@@ -253,7 +260,7 @@ class Gun:
         nearest_enemy = find_nearest_enemy(self.player.pos)
         if nearest_enemy:
             direction = (nearest_enemy.pos - self.player.pos).normalize()
-            projectile = Projectile(self.player.pos, direction, self.damage, RED, piercing=False)
+            projectile = Projectile(self.player.pos, direction, self.damage, RED, piercing=False, sprite=red_orb_sprite)
             all_sprites.add(projectile)
             projectiles.add(projectile)
 
@@ -353,7 +360,7 @@ class HeavyAttack:
         for i in range(self.num_shots):
             angle = math.radians(i * angle_step)
             direction = Vector2(math.cos(angle), math.sin(angle)).normalize()
-            projectile = Projectile(self.player.pos, direction, self.damage, BLUE, piercing=True)
+            projectile = Projectile(self.player.pos, direction, self.damage, BLUE, piercing=True, sprite=yellow_orb_sprite)
             all_sprites.add(projectile)
             projectiles.add(projectile)
 

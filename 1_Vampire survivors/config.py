@@ -106,19 +106,19 @@ ITEM_STATS = {
         "sprite_size": (20, 20)
     },
     "mana": {
-        "experience_value": 10,
+        "experience_value": 20,
         "sprite_size": (20, 20)
     },
     "emerald": {
-        "health_value": (10, 25),  # random range
+        "health_value": (5, 20),  # random range
         "sprite_size": (25, 25)
     }
 }
 
 # Drop probabilities
 DROP_PROBABILITIES = {
-    "gem": 0.5,
-    "mana": 0.01,
+    "gem": 0.7,
+    "mana": 0.04,
     "emerald": 0.05
 }
 
@@ -133,7 +133,12 @@ upgrade_gun = {
     7: {"damage": 20, "cooldown": 0.7},
     8: {"damage": 25, "cooldown": 0.6},
     9: {"damage": 30, "cooldown": 0.5},
-    10: {"damage": 40, "cooldown": 0.3}
+    10: {"damage": 30, "cooldown": 0.3},
+    11: {"damage": 3, "cooldown": 0.2},
+    12: {"damage": 35, "cooldown": 0.3},
+    13: {"damage": 37, "cooldown": 0.2},
+    14: {"damage": 40, "cooldown": 0.2},
+    15: {"damage": 50, "cooldown": 0.2},
 }
 
 upgrade_blob = {
@@ -146,18 +151,28 @@ upgrade_blob = {
     7: {"damage": 18, "speed": 3, "size": 40},
     8: {"damage": 20, "speed": 3.5, "size": 44},
     9: {"damage": 25, "speed": 4, "size": 48},
-    10: {"damage": 40, "speed": 5, "size": 50}
+    10: {"damage": 30, "speed": 4.2, "size": 50},
+    11: {"damage": 33, "speed": 4.5, "size": 50},
+    12: {"damage": 36, "speed": 4.7, "size": 52},
+    13: {"damage": 40, "speed": 4.5, "size": 54},
+    14: {"damage": 50, "speed": 4, "size": 60},
+    15: {"damage": 50, "speed": 5, "size": 60},
 }
 
 upgrade_heavy = {
-    1: {"damage": 10, "cooldown": 30.0, "num_shots": 4},
-    2: {"damage": 12, "cooldown": 28.0, "num_shots": 4},
-    3: {"damage": 15, "cooldown": 26.0, "num_shots": 8},
-    4: {"damage": 20, "cooldown": 24.0, "num_shots": 8},
-    5: {"damage": 25, "cooldown": 22.0, "num_shots": 16},
-    6: {"damage": 30, "cooldown": 20.0, "num_shots": 16},
-    7: {"damage": 35, "cooldown": 20.0, "num_shots": 32},
-    8: {"damage": 40, "cooldown": 20.0, "num_shots": 32},
-    9: {"damage": 45, "cooldown": 20.0, "num_shots": 32},
-    10: {"damage": 40, "cooldown": 20.0, "num_shots": 50}
+    1: {"damage": 5, "cooldown": 30.0, "num_shots": 4},
+    2: {"damage": 10, "cooldown": 30.0, "num_shots": 4},
+    3: {"damage": 15, "cooldown": 25.0, "num_shots": 4},
+    4: {"damage": 15, "cooldown": 25.0, "num_shots": 8},
+    5: {"damage": 20, "cooldown": 25.0, "num_shots": 8},
+    6: {"damage": 20, "cooldown": 25.0, "num_shots": 16},
+    7: {"damage": 25, "cooldown": 22.0, "num_shots": 16},
+    8: {"damage": 25, "cooldown": 22.0, "num_shots": 32},
+    9: {"damage": 30, "cooldown": 22.0, "num_shots": 32},
+    10: {"damage": 35, "cooldown": 30.0, "num_shots": 32},
+    11: {"damage": 35, "cooldown": 30.0, "num_shots": 40},
+    12: {"damage": 40, "cooldown": 30.0, "num_shots": 40},
+    13: {"damage": 40, "cooldown": 25.0, "num_shots": 50},
+    14: {"damage": 40, "cooldown": 20.0, "num_shots": 64},
+    15: {"damage": 40, "cooldown": 20.0, "num_shots": 64},
 }
