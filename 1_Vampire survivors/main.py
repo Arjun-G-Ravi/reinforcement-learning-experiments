@@ -52,6 +52,9 @@ medusa_sprite = load_sprite("icons8-medusa-64.png", BOSS_STATS[400]["medusa"]["s
 echidna_sprite = load_sprite("icons8-echidna-64.png", BOSS_STATS[401]["echidna"]["sprite_size"])
 devil_sprite = load_sprite("icons8-devil-64.png", BOSS_STATS[500]["devil"]["sprite_size"])
 
+# Enemy sprites
+mini_devil_sprite = load_sprite("mini-devil.png", ENEMY_STATS["mini-devil"]["sprite_size"])
+
 # Item sprites
 gem_sprite = load_sprite("icons8-gem-96.png", ITEM_STATS["gem"]["sprite_size"])
 mana_sprite = load_sprite("icons8-mana-100.png", ITEM_STATS["mana"]["sprite_size"])
@@ -146,6 +149,12 @@ class Enemy(pygame.sprite.Sprite):
                 self.speed = stats["speed"]
                 self.health = stats["health"] + 3 * player_level
                 self.damage_rate = stats["damage_rate"]
+            elif enemy_type == "mini-devil":
+                self.image = mini_devil_sprite.copy()
+                # Randomize stats within ranges
+                self.speed = random.randint(stats["speed"][0], stats["speed"][1])
+                self.health = random.randint(stats["health"][0], stats["health"][1]) + 2 * player_level
+                self.damage_rate = random.randint(stats["damage_rate"][0], stats["damage_rate"][1])
         elif enemy_type == "boss" and boss_name:
             # Find boss stats from any kill milestone
             boss_stats = None
@@ -268,7 +277,9 @@ class ManaItem(pygame.sprite.Sprite):
         super().__init__()
         self.image = mana_sprite.copy()
         self.rect = self.image.get_rect(center=pos)
-        self.value = ITEM_STATS["mana"]["experience_value"]
+        # Random experience value between 1-10
+        exp_range = ITEM_STATS["mana"]["experience_value"]
+        self.value = random.randint(exp_range[0], exp_range[1])
 
 class HealthItem(pygame.sprite.Sprite):
     def __init__(self, pos):
@@ -302,19 +313,19 @@ class Gun:
             projectiles.add(projectile)
 
     def upgrade(self):
-        if self.level < 10:
+        if self.level < 15:
             self.level += 1
             self.damage = upgrade_gun[self.level]["damage"]
             self.cooldown = upgrade_gun[self.level]["cooldown"]
 
     def stats(self):
-        return f"Gun (Lvl {self.level}/10): Dmg {self.damage}, CD {self.cooldown:.2f}s"
+        return f"Gun (Lvl {self.level}/15): Dmg {self.damage}, CD {self.cooldown:.2f}s"
 
     def stats_next_level(self):
-        if self.level < 10:
+        if self.level < 15:
             next_level = self.level + 1
             dmg_diff = upgrade_gun[next_level]["damage"] - self.damage
-            return f"Gun (Lvl {next_level}/10): Dmg {upgrade_gun[next_level]['damage']} (+{dmg_diff}), CD {upgrade_gun[next_level]['cooldown']:.2f}s"
+            return f"Gun (Lvl {next_level}/15): Dmg {upgrade_gun[next_level]['damage']} (+{dmg_diff}), CD {upgrade_gun[next_level]['cooldown']:.2f}s"
         return f"Gun (Maxed): Dmg {self.damage}, CD {self.cooldown:.2f}s"
 
 class BlobWeapon:
@@ -347,7 +358,7 @@ class BlobWeapon:
             projectiles.add(self.blob)
 
     def upgrade(self):
-        if self.level < 10:
+        if self.level < 15:
             self.level += 1
             self.damage = upgrade_blob[self.level]["damage"]
             self.speed = upgrade_blob[self.level]["speed"]
@@ -359,14 +370,14 @@ class BlobWeapon:
                 self.blob.image = pygame.transform.scale(fire_sprite, (self.size, self.size))
 
     def stats(self):
-        return f"Blob (Lvl {self.level}/10): Dmg {self.damage}, Spd {self.speed:.1f}"
+        return f"Blob (Lvl {self.level}/15): Dmg {self.damage}, Spd {self.speed:.1f}"
 
     def stats_next_level(self):
-        if self.level < 10:
+        if self.level < 15:
             next_level = self.level + 1
             dmg_diff = upgrade_blob[next_level]["damage"] - self.damage
             spd_diff = upgrade_blob[next_level]["speed"] - self.speed
-            return f"Blob (Lvl {next_level}/10): Dmg {upgrade_blob[next_level]['damage']} (+{dmg_diff}), Spd {upgrade_blob[next_level]['speed']:.1f} (+{spd_diff:.1f})"
+            return f"Blob (Lvl {next_level}/15): Dmg {upgrade_blob[next_level]['damage']} (+{dmg_diff}), Spd {upgrade_blob[next_level]['speed']:.1f} (+{spd_diff:.1f})"
         return f"Blob (Maxed): Dmg {self.damage}, Spd {self.speed:.1f}"
 
 class HeavyAttack:
@@ -402,7 +413,7 @@ class HeavyAttack:
             projectiles.add(projectile)
 
     def upgrade(self):
-        if self.level < 10:
+        if self.level < 15:
             self.level += 1
             self.damage = upgrade_heavy[self.level]["damage"]
             self.cooldown = upgrade_heavy[self.level]["cooldown"]
@@ -412,14 +423,14 @@ class HeavyAttack:
 
     def stats(self):
         reload = self.cooldown - self.timer if not self.ready else 0
-        return f"Heavy (Lvl {self.level}/10): Dmg {self.damage}, Rld {reload:.1f}s"
+        return f"Heavy (Lvl {self.level}/15): Dmg {self.damage}, Rld {reload:.1f}s"
 
     def stats_next_level(self):
-        if self.level < 10:
+        if self.level < 15:
             next_level = self.level + 1
             dmg_diff = upgrade_heavy[next_level]["damage"] - self.damage
             reload = upgrade_heavy[next_level]["cooldown"] - self.timer if not self.ready else 0
-            return f"Heavy (Lvl {next_level}/10): Dmg {upgrade_heavy[next_level]['damage']} (+{dmg_diff}), Rld {reload:.1f}s"
+            return f"Heavy (Lvl {next_level}/15): Dmg {upgrade_heavy[next_level]['damage']} (+{dmg_diff}), Rld {reload:.1f}s"
         reload = self.cooldown - self.timer if not self.ready else 0
         return f"Heavy (Maxed): Dmg {self.damage}, Rld {reload:.1f}s"
 
@@ -440,6 +451,33 @@ def check_collision_with_enemies(player):
         if player.collision_rect.colliderect(enemy.collision_rect):
             colliding_enemies.append(enemy)
     return colliding_enemies
+
+def create_boss_drops(center_pos):
+    """Create 1-5 random items when a boss dies"""
+    num_drops = random.randint(1, 5)
+    items_created = []
+    
+    for i in range(num_drops):
+        # Create random offset from center position
+        offset_x = random.randint(-30, 30)
+        offset_y = random.randint(-30, 30)
+        drop_pos = (center_pos[0] + offset_x, center_pos[1] + offset_y)
+        
+        # Choose random item type
+        drop_type = random.choice(["gem", "mana", "emerald"])
+        
+        if drop_type == "gem":
+            item = ExpItem(drop_pos)
+        elif drop_type == "mana":
+            item = ManaItem(drop_pos)
+        else:  # emerald
+            item = HealthItem(drop_pos)
+        
+        all_sprites.add(item)
+        items.add(item)
+        items_created.append(item)
+    
+    return items_created
 
 player = Player()
 all_sprites.add(player)
@@ -469,16 +507,16 @@ while running:
             if game_state == "quit_confirm":
                 if event.key == pygame.K_y:
                     running = False
-                elif event.key == pygame.K_n or event.key == pygame.K_ESCAPE:
+                elif event.key == pygame.K_n:
                     game_state = "playing"
             elif game_state == "upgrading":
-                if event.key == pygame.K_1 and player.weapons[0].level < 10:
+                if event.key == pygame.K_1 and player.weapons[0].level < 15:
                     player.weapons[0].upgrade()
                     game_state = "playing"
-                elif event.key == pygame.K_2 and player.weapons[1].level < 10:
+                elif event.key == pygame.K_2 and player.weapons[1].level < 15:
                     player.weapons[1].upgrade()
                     game_state = "playing"
-                elif event.key == pygame.K_3 and player.weapons[2].level < 10:
+                elif event.key == pygame.K_3 and player.weapons[2].level < 15:
                     player.weapons[2].upgrade()
                     game_state = "playing"
                 elif event.key == pygame.K_4 or event.key == pygame.K_SPACE:
@@ -489,7 +527,7 @@ while running:
                 mouse_pos = pygame.mouse.get_pos()
                 for i, rect in enumerate(upgrade_rects):
                     if rect.collidepoint(mouse_pos):
-                        if i < 3 and player.weapons[i].level < 10:
+                        if i < 3 and player.weapons[i].level < 15:
                             player.weapons[i].upgrade()
                             game_state = "playing"
                         elif i == 3:
@@ -513,13 +551,27 @@ while running:
                 pos = (-20, random.randint(0, screen_height))
             else:
                 pos = (screen_width + 20, random.randint(0, screen_height))
-            if player.level < 5: enemy_type = random.choices(["zombie", "vampire", "golem"], weights=[95, 5, 0], k=1)[0]
-            elif player.level < 10: enemy_type = random.choices(["zombie", "vampire", "golem"], weights=[70, 20, 10], k=1)[0]
-            elif player.level < 15: enemy_type = random.choices(["zombie", "vampire", "golem"], weights=[50, 40, 10], k=1)[0]
-            elif player.level < 20: enemy_type = random.choices(["zombie", "vampire", "golem"], weights=[20, 60, 20], k=1)[0]
-            elif player.level < 25: enemy_type = random.choices(["zombie", "vampire", "golem"], weights=[10, 10, 80], k=1)[0]
-            elif player.level < 30: enemy_type = random.choices(["zombie", "vampire", "golem"], weights=[0, 70, 30], k=1)[0]
-            else: enemy_type = random.choices(["zombie", "vampire", "golem"], weights=[0, 50, 50], k=1)[0]
+            
+            # Determine enemy type based on player level and kill count
+            if player.kill_count >= 500:
+                # After kill 500, include mini-devils in spawning
+                if player.level < 5: enemy_type = random.choices(["zombie", "vampire", "golem", "mini-devil"], weights=[85, 15, 0, 10], k=1)[0]
+                elif player.level < 10: enemy_type = random.choices(["zombie", "vampire", "golem", "mini-devil"], weights=[60, 20, 10, 10], k=1)[0]
+                elif player.level < 15: enemy_type = random.choices(["zombie", "vampire", "golem", "mini-devil"], weights=[40, 30, 15, 15], k=1)[0]
+                elif player.level < 20: enemy_type = random.choices(["zombie", "vampire", "golem", "mini-devil"], weights=[15, 45, 20, 20], k=1)[0]
+                elif player.level < 25: enemy_type = random.choices(["zombie", "vampire", "golem", "mini-devil"], weights=[5, 5, 40, 50], k=1)[0]
+                elif player.level < 30: enemy_type = random.choices(["zombie", "vampire", "golem", "mini-devil"], weights=[0, 25, 25, 50], k=1)[0]
+                else: enemy_type = random.choices(["zombie", "vampire", "golem", "mini-devil"], weights=[0, 20, 30, 50], k=1)[0]
+            else:
+                # Before kill 500, no mini-devils
+                if player.level < 5: enemy_type = random.choices(["zombie", "vampire", "golem"], weights=[95, 5, 0], k=1)[0]
+                elif player.level < 10: enemy_type = random.choices(["zombie", "vampire", "golem"], weights=[70, 20, 10], k=1)[0]
+                elif player.level < 15: enemy_type = random.choices(["zombie", "vampire", "golem"], weights=[50, 40, 10], k=1)[0]
+                elif player.level < 20: enemy_type = random.choices(["zombie", "vampire", "golem"], weights=[20, 60, 20], k=1)[0]
+                elif player.level < 25: enemy_type = random.choices(["zombie", "vampire", "golem"], weights=[10, 10, 80], k=1)[0]
+                elif player.level < 30: enemy_type = random.choices(["zombie", "vampire", "golem"], weights=[0, 70, 30], k=1)[0]
+                else: enemy_type = random.choices(["zombie", "vampire", "golem"], weights=[0, 50, 50], k=1)[0]
+            
             enemy = Enemy(pos, enemy_type, player.level)
             all_sprites.add(enemy)
             enemies.add(enemy)
@@ -533,19 +585,25 @@ while running:
                         projectile.hit_enemies.add(enemy)
                         if enemy.health <= 0:
                             enemy.kill()
-                            drop = random.choices(["gem", "mana", "emerald"], 
-                                                  weights=[DROP_PROBABILITIES["gem"], 
-                                                           DROP_PROBABILITIES["mana"],
-                                                           DROP_PROBABILITIES["emerald"]], 
-                                                  k=1)[0]
-                            if drop == "gem":
-                                item = ExpItem(enemy.rect.center)
-                            elif drop == "mana":
-                                item = ManaItem(enemy.rect.center)
+                            
+                            # Create drops - bosses drop multiple items, regular enemies drop single item
+                            if enemy.enemy_type == "boss":
+                                create_boss_drops(enemy.rect.center)
                             else:
-                                item = HealthItem(enemy.rect.center)
-                            all_sprites.add(item)
-                            items.add(item)
+                                drop = random.choices(["gem", "mana", "emerald"], 
+                                                      weights=[DROP_PROBABILITIES["gem"], 
+                                                               DROP_PROBABILITIES["mana"],
+                                                               DROP_PROBABILITIES["emerald"]], 
+                                                      k=1)[0]
+                                if drop == "gem":
+                                    item = ExpItem(enemy.rect.center)
+                                elif drop == "mana":
+                                    item = ManaItem(enemy.rect.center)
+                                else:
+                                    item = HealthItem(enemy.rect.center)
+                                all_sprites.add(item)
+                                items.add(item)
+                            
                             player.kill_count += 1
                             
                             # Boss spawning logic
@@ -593,19 +651,25 @@ while running:
                             projectile.kill()
                         if enemy.health <= 0:
                             enemy.kill()
-                            drop = random.choices(["gem", "mana", "emerald"], 
-                                                  weights=[DROP_PROBABILITIES["gem"], 
-                                                           DROP_PROBABILITIES["mana"],
-                                                           DROP_PROBABILITIES["emerald"]], 
-                                                  k=1)[0]
-                            if drop == "gem":
-                                item = ExpItem(enemy.rect.center)
-                            elif drop == "mana":
-                                item = ManaItem(enemy.rect.center)
+                            
+                            # Create drops - bosses drop multiple items, regular enemies drop single item
+                            if enemy.enemy_type == "boss":
+                                create_boss_drops(enemy.rect.center)
                             else:
-                                item = HealthItem(enemy.rect.center)
-                            all_sprites.add(item)
-                            items.add(item)
+                                drop = random.choices(["gem", "mana", "emerald"], 
+                                                      weights=[DROP_PROBABILITIES["gem"], 
+                                                               DROP_PROBABILITIES["mana"],
+                                                               DROP_PROBABILITIES["emerald"]], 
+                                                      k=1)[0]
+                                if drop == "gem":
+                                    item = ExpItem(enemy.rect.center)
+                                elif drop == "mana":
+                                    item = ManaItem(enemy.rect.center)
+                                else:
+                                    item = HealthItem(enemy.rect.center)
+                                all_sprites.add(item)
+                                items.add(item)
+                            
                             player.kill_count += 1
                             
                             # Boss spawning logic
@@ -775,13 +839,11 @@ while running:
         quit_question = font.render("Are you sure you want to quit?", True, WHITE)
         quit_yes = font.render("Press Y to quit", True, GREEN)
         quit_no = font.render("Press N to continue", True, YELLOW)
-        quit_esc = font.render("Press ESC to continue", True, YELLOW)
         
         screen.blit(quit_title, (dialog_x + dialog_width//2 - quit_title.get_width()//2, dialog_y + 30))
         screen.blit(quit_question, (dialog_x + dialog_width//2 - quit_question.get_width()//2, dialog_y + 80))
         screen.blit(quit_yes, (dialog_x + dialog_width//2 - quit_yes.get_width()//2, dialog_y + 120))
-        screen.blit(quit_no, (dialog_x + dialog_width//2 - quit_no.get_width()//2, dialog_y + 145))
-        screen.blit(quit_esc, (dialog_x + dialog_width//2 - quit_esc.get_width()//2, dialog_y + 170))
+        screen.blit(quit_no, (dialog_x + dialog_width//2 - quit_no.get_width()//2, dialog_y + 150))
 
     if game_state in ["playing", "upgrading"]:
         health_bar_width = 200

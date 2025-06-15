@@ -20,6 +20,12 @@ ENEMY_STATS = {
         "health": 100,
         "damage_rate": 30,
         "sprite_size": (55, 55)
+    },
+    "mini-devil": {
+        "speed": (50, 200),  # Random range
+        "health": (50, 300),  # Random range
+        "damage_rate": (10, 100),  # Random range
+        "sprite_size": (50, 50)
     }
 }
 
@@ -106,7 +112,7 @@ ITEM_STATS = {
         "sprite_size": (20, 20)
     },
     "mana": {
-        "experience_value": 20,
+        "experience_value": (1, 10),  # Random range 1-10
         "sprite_size": (20, 20)
     },
     "emerald": {
