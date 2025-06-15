@@ -2,8 +2,7 @@ import pygame
 import random
 import math
 from pygame.math import Vector2
-from upgrades import upgrade_gun, upgrade_blob, upgrade_heavy
-from config import ENEMY_STATS, BOSS_STATS, ITEM_STATS, DROP_PROBABILITIES
+from config import ENEMY_STATS, BOSS_STATS, ITEM_STATS, DROP_PROBABILITIES, upgrade_gun, upgrade_blob, upgrade_heavy
 
 # Initialize Pygame
 pygame.init()
@@ -27,9 +26,9 @@ def load_sprite(filename, size=None):
 
 wizard_sprite = load_sprite("wizard.png", (50, 50))
 fire_sprite = load_sprite("icons8-fire-96.png", (30, 30))
-zombie_sprite = load_sprite("icons8-zombie-64.png", ENEMY_STATS["normal"]["sprite_size"])
-vampire_sprite = load_sprite("icons8-vampire-64.png", ENEMY_STATS["fast"]["sprite_size"])
-golem_sprite = load_sprite("icons8-golem-64.png", ENEMY_STATS["strong"]["sprite_size"])
+zombie_sprite = load_sprite("icons8-zombie-64.png", ENEMY_STATS["zombie"]["sprite_size"])
+vampire_sprite = load_sprite("icons8-vampire-64.png", ENEMY_STATS["vampire"]["sprite_size"])
+golem_sprite = load_sprite("icons8-golem-64.png", ENEMY_STATS["golem"]["sprite_size"])
 
 # Boss sprites
 bigfoot_sprite = load_sprite("icons8-bigfoot-64.png", BOSS_STATS[100]["bigfoot"]["sprite_size"])
@@ -62,7 +61,6 @@ font = pygame.font.SysFont(None, 28)
 large_font = pygame.font.SysFont(None, 60)
 kill_font = pygame.font.SysFont(None, 42)
 
-# Sprite groups
 all_sprites = pygame.sprite.Group()
 enemies = pygame.sprite.Group()
 projectiles = pygame.sprite.Group()
@@ -70,7 +68,6 @@ items = pygame.sprite.Group()
 
 screen_rect = screen.get_rect()
 
-### Player Class
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
@@ -97,29 +94,29 @@ class Player(pygame.sprite.Sprite):
         self.pos += velocity * dt
         self.rect.center = self.pos
         self.rect.clamp_ip(screen_rect)
-        self.pos = Vector2(self.rect.center)  # Update pos to clamped position
+        self.pos = Vector2(self.rect.center)
         for weapon in self.weapons:
             weapon.update(dt)
 
 class Enemy(pygame.sprite.Sprite):
-    def __init__(self, pos, enemy_type="normal", player_level=1, boss_name=None):
+    def __init__(self, pos, enemy_type="zombie", player_level=1, boss_name=None):
         super().__init__()
         self.enemy_type = enemy_type
         self.boss_name = boss_name
         
         if enemy_type in ENEMY_STATS:
             stats = ENEMY_STATS[enemy_type]
-            if enemy_type == "normal":
+            if enemy_type == "zombie":
                 self.image = zombie_sprite.copy()
                 self.speed = stats["speed"]
                 self.health = stats["health"]
                 self.damage_rate = stats["damage_rate"]
-            elif enemy_type == "fast":
+            elif enemy_type == "vampire":
                 self.image = vampire_sprite.copy()
                 self.speed = stats["speed"]
                 self.health = stats["health"] + player_level
                 self.damage_rate = stats["damage_rate"]
-            elif enemy_type == "strong":
+            elif enemy_type == "golem":
                 self.image = golem_sprite.copy()
                 self.speed = stats["speed"]
                 self.health = stats["health"] + 3 * player_level
@@ -174,7 +171,6 @@ class Enemy(pygame.sprite.Sprite):
         self.pos += direction * self.speed * dt
         self.rect.center = self.pos
 
-### Projectile Class
 class Projectile(pygame.sprite.Sprite):
     def __init__(self, pos, direction, damage, color=RED, piercing=False):
         super().__init__()
@@ -238,7 +234,6 @@ class HealthItem(pygame.sprite.Sprite):
         health_range = ITEM_STATS["emerald"]["health_value"]
         self.value = random.randint(health_range[0], health_range[1])
 
-### Weapon Classes
 class Gun:
     def __init__(self, player):
         self.name = 'Gun'
@@ -303,7 +298,6 @@ class BlobWeapon:
             self.blob.rotation_speed = self.speed
         else:
             self.blob = Blob(self.player.pos, self.damage, self.speed)
-            # Scale the fire sprite to match the blob size
             self.blob.image = pygame.transform.scale(fire_sprite, (self.blob.size, self.blob.size))
             all_sprites.add(self.blob)
             projectiles.add(self.blob)
@@ -318,7 +312,6 @@ class BlobWeapon:
                 self.blob.damage = self.damage
                 self.blob.rotation_speed = self.speed
                 self.blob.size = self.size
-                # Scale the fire sprite to the new size
                 self.blob.image = pygame.transform.scale(fire_sprite, (self.size, self.size))
 
     def stats(self):
@@ -396,24 +389,19 @@ def find_nearest_enemy(position):
             nearest = enemy
     return nearest
 
-# Instantiate player
 player = Player()
 all_sprites.add(player)
 
-# Enemy spawning setup
 spawn_timer = 0
 base_spawn_interval = 3
 
-# Game state
 game_state = "playing"
 game_result = None
 
-# Main game loop
 running = True
 while running:
     dt = clock.tick(60) / 1000.0
 
-    # Event handling
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -431,7 +419,7 @@ while running:
                     player.weapons[2].upgrade()
                     game_state = "playing"
                 elif event.key == pygame.K_4 or event.key == pygame.K_SPACE:
-                    player.health = min(100, player.health + 25)  # Add 25 health, cap at 100
+                    player.health = min(100, player.health + 25)
                     game_state = "playing"
         elif event.type == pygame.MOUSEBUTTONDOWN and game_state == "upgrading":
             mouse_pos = pygame.mouse.get_pos()
@@ -440,17 +428,16 @@ while running:
                     if i < 3 and player.weapons[i].level < 10:
                         player.weapons[i].upgrade()
                         game_state = "playing"
-                    elif i == 3:  # Health upgrade option
-                        player.health = min(100, player.health + 25)  # Add 25 health, cap at 100
+                    elif i == 3:
+                        player.health = min(100, player.health + 25)
                         game_state = "playing"
                     break
 
-    # Update game logic only when playing
     if game_state == "playing":
         all_sprites.update(dt)
 
-        # Dynamic spawn interval based on player level
-        spawn_interval = max(0.5, base_spawn_interval - 0.5 * (player.level - 1))
+        spawn_interval = max(0.7, base_spawn_interval - 0.3 * (player.level - 1))
+        print(spawn_interval)
         spawn_timer += dt
         if spawn_timer >= spawn_interval:
             spawn_timer = 0
@@ -463,18 +450,17 @@ while running:
                 pos = (-20, random.randint(0, screen_height))
             else:
                 pos = (screen_width + 20, random.randint(0, screen_height))
-            if player.level < 5: enemy_type = random.choices(["normal", "fast", "strong"], weights=[95, 5, 0], k=1)[0] # 0 - 5
-            elif player.level < 10: enemy_type = random.choices(["normal", "fast", "strong"], weights=[60, 20, 20], k=1)[0] # 5 - 10
-            elif player.level < 15: enemy_type = random.choices(["normal", "fast", "strong"], weights=[40, 20, 40], k=1)[0] # 10 - 15
-            elif player.level < 20: enemy_type = random.choices(["normal", "fast", "strong"], weights=[0, 80, 20], k=1)[0] # 15 - 20
-            elif player.level < 25: enemy_type = random.choices(["normal", "fast", "strong"], weights=[0, 50, 50], k=1)[0] # 25 - 30
-            elif player.level < 30: enemy_type = random.choices(["normal", "fast", "strong"], weights=[0, 90, 10], k=1)[0] # 35- 40
-            else: enemy_type = random.choices(["normal", "fast", "strong"], weights=[0, 50, 50], k=1)[0]
+            if player.level < 5: enemy_type = random.choices(["zombie", "vampire", "golem"], weights=[95, 5, 0], k=1)[0]
+            elif player.level < 10: enemy_type = random.choices(["zombie", "vampire", "golem"], weights=[70, 20, 10], k=1)[0]
+            elif player.level < 15: enemy_type = random.choices(["zombie", "vampire", "golem"], weights=[50, 40, 10], k=1)[0]
+            elif player.level < 20: enemy_type = random.choices(["zombie", "vampire", "golem"], weights=[20, 60, 20], k=1)[0]
+            elif player.level < 25: enemy_type = random.choices(["zombie", "vampire", "golem"], weights=[10, 10, 80], k=1)[0]
+            elif player.level < 30: enemy_type = random.choices(["zombie", "vampire", "golem"], weights=[0, 70, 30], k=1)[0]
+            else: enemy_type = random.choices(["zombie", "vampire", "golem"], weights=[0, 50, 50], k=1)[0]
             enemy = Enemy(pos, enemy_type, player.level)
             all_sprites.add(enemy)
             enemies.add(enemy)
 
-        # Collision detection
         for projectile in projectiles:
             if isinstance(projectile, Blob):
                 hits = pygame.sprite.spritecollide(projectile, enemies, False)
@@ -528,7 +514,6 @@ while running:
                                 all_sprites.add(boss)
                                 enemies.add(boss)
                             
-                            # Check if devil is killed
                             if enemy.enemy_type == "boss" and enemy.boss_name == "devil":
                                 game_state = "end"
                                 game_result = "win"
@@ -589,7 +574,6 @@ while running:
                                 all_sprites.add(boss)
                                 enemies.add(boss)
                             
-                            # Check if devil is killed
                             if enemy.enemy_type == "boss" and enemy.boss_name == "devil":
                                 game_state = "end"
                                 game_result = "win"
@@ -623,10 +607,7 @@ while running:
             player.health -= damage
 
         # Check game over conditions
-        if player.kill_count >= 500:
-            game_state = "end"
-            game_result = "win"
-        elif player.health <= 0:
+        if player.health <= 0:
             game_state = "end"
             game_result = "loss"
 

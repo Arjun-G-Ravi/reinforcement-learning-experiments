@@ -3,21 +3,21 @@
 
 # Base enemy stats
 ENEMY_STATS = {
-    "normal": {
+    "zombie": {
         "speed": 80,
         "health": 20,
         "damage_rate": 20,
         "sprite_size": (45, 45)
     },
-    "fast": {
+    "vampire": {
         "speed": 200,
-        "health": 10,  # + player_level
+        "health": 10,
         "damage_rate": 10,
         "sprite_size": (45, 45)
     },
-    "strong": {
+    "golem": {
         "speed": 50,
-        "health": 100,  # + 3 * player_level
+        "health": 100,
         "damage_rate": 30,
         "sprite_size": (55, 55)
     }
@@ -27,16 +27,16 @@ ENEMY_STATS = {
 BOSS_STATS = {
     100: {
         "bigfoot": {
-            "speed": 50,
-            "health": 300,  # + 5 * player_level
+            "speed": 100,
+            "health": 500,  # + 5 * player_level
             "damage_rate": 140,
-            "sprite_size": (90, 90)
+            "sprite_size": (120, 120)
         },
         "minotaur": {
-            "speed": 150,
-            "health": 300,  # + 5 * player_level
+            "speed": 100,
+            "health": 600,  # + 5 * player_level
             "damage_rate": 100,
-            "sprite_size": (85, 85)
+            "sprite_size": (100, 100)
         }
     },
     200: {
@@ -44,19 +44,19 @@ BOSS_STATS = {
             "speed": 40,
             "health": 600,  # + 8 * player_level
             "damage_rate": 70,
-            "sprite_size": (100, 100)
+            "sprite_size": (160, 160)
         },
         "giant": {
-            "speed": 40,
-            "health": 800,  # + 8 * player_level
+            "speed": 20,
+            "health": 1000,  # + 8 * player_level
             "damage_rate": 55,
-            "sprite_size": (130, 130)
+            "sprite_size": (160, 160)
         },
         "monster": {
-            "speed": 140,
-            "health": 450,  # + 8 * player_level
+            "speed": 40,
+            "health": 650,  # + 8 * player_level
             "damage_rate": 65,
-            "sprite_size": (95, 95)
+            "sprite_size": (130, 130)
         }
     },
     300: {
@@ -64,19 +64,19 @@ BOSS_STATS = {
             "speed": 120,
             "health": 1000,  # + 10 * player_level
             "damage_rate": 120,
-            "sprite_size": (120, 120)
+            "sprite_size": (130, 130)
         },
         "chimera": {
-            "speed": 100,
+            "speed": 120,
             "health": 750,  # + 10 * player_level
-            "damage_rate": 100,
-            "sprite_size": (115, 115)
+            "damage_rate": 160,
+            "sprite_size": (125, 125)
         }
     },
     400: {
         "medusa": {
-            "speed": 80,
-            "health": 1000,  # + 12 * player_level
+            "speed": 120,
+            "health": 1500,  # + 12 * player_level
             "damage_rate": 100,
             "sprite_size": (140, 140)
         }
@@ -84,7 +84,7 @@ BOSS_STATS = {
     401: {
         "echidna": {
             "speed": 50,
-            "health": 1500,  # + 12 * player_level
+            "health": 2000,  # + 12 * player_level
             "damage_rate": 110,
             "sprite_size": (140, 140)
         }
@@ -92,7 +92,7 @@ BOSS_STATS = {
     500: {
         "devil": {
             "speed": 150,
-            "health": 2000,  # + 15 * player_level
+            "health": 3000,  # + 15 * player_level
             "damage_rate": 200,
             "sprite_size": (150, 150)
         }
@@ -120,4 +120,44 @@ DROP_PROBABILITIES = {
     "gem": 0.5,
     "mana": 0.01,
     "emerald": 0.05
+}
+
+# Weapon upgrades
+upgrade_gun = {
+    1: {"damage": 5, "cooldown": 2},
+    2: {"damage": 5, "cooldown": 1},
+    3: {"damage": 7, "cooldown": 1},
+    4: {"damage": 9, "cooldown": 1},
+    5: {"damage": 12, "cooldown": 0.9},
+    6: {"damage": 15, "cooldown": 0.8},
+    7: {"damage": 20, "cooldown": 0.7},
+    8: {"damage": 25, "cooldown": 0.6},
+    9: {"damage": 30, "cooldown": 0.5},
+    10: {"damage": 40, "cooldown": 0.3}
+}
+
+upgrade_blob = {
+    1: {"damage": 3, "speed": 1, "size": 20},
+    2: {"damage": 6, "speed": 1.2, "size": 22},
+    3: {"damage": 10, "speed": 1.5, "size": 24},
+    4: {"damage": 10, "speed": 1.75, "size": 26},
+    5: {"damage": 12, "speed": 2, "size": 32},
+    6: {"damage": 15, "speed": 2.5, "size": 36},
+    7: {"damage": 18, "speed": 3, "size": 40},
+    8: {"damage": 20, "speed": 3.5, "size": 44},
+    9: {"damage": 25, "speed": 4, "size": 48},
+    10: {"damage": 40, "speed": 5, "size": 50}
+}
+
+upgrade_heavy = {
+    1: {"damage": 10, "cooldown": 30.0, "num_shots": 4},
+    2: {"damage": 12, "cooldown": 28.0, "num_shots": 4},
+    3: {"damage": 15, "cooldown": 26.0, "num_shots": 8},
+    4: {"damage": 20, "cooldown": 24.0, "num_shots": 8},
+    5: {"damage": 25, "cooldown": 22.0, "num_shots": 16},
+    6: {"damage": 30, "cooldown": 20.0, "num_shots": 16},
+    7: {"damage": 35, "cooldown": 20.0, "num_shots": 32},
+    8: {"damage": 40, "cooldown": 20.0, "num_shots": 32},
+    9: {"damage": 45, "cooldown": 20.0, "num_shots": 32},
+    10: {"damage": 40, "cooldown": 20.0, "num_shots": 50}
 }
