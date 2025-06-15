@@ -77,6 +77,9 @@ class Player(pygame.sprite.Sprite):
         super().__init__()
         self.image = wizard_sprite.copy()
         self.rect = self.image.get_rect(center=(screen_width / 2, screen_height / 2))
+        # Smaller collision rectangle for more precise collision detection
+        self.collision_rect = pygame.Rect(0, 0, 30, 30)  # Smaller than the 50x50 sprite
+        self.collision_rect.center = self.rect.center
         self.pos = Vector2(self.rect.center)
         self.speed = 300
         self.health = 100
@@ -85,6 +88,10 @@ class Player(pygame.sprite.Sprite):
         self.exp_to_next_level = self.level
         self.weapons = [Gun(self), BlobWeapon(self), HeavyAttack(self)]
         self.kill_count = 0
+        # Hit effect variables
+        self.hit_timer = 0.0
+        self.hit_duration = 0.2  # Flash for 0.2 seconds
+        self.is_hit = False
 
     def update(self, dt):
         keys = pygame.key.get_pressed()
@@ -97,10 +104,24 @@ class Player(pygame.sprite.Sprite):
             velocity = velocity.normalize() * self.speed
         self.pos += velocity * dt
         self.rect.center = self.pos
+        self.collision_rect.center = self.pos  # Keep collision rect centered
         self.rect.clamp_ip(screen_rect)
         self.pos = Vector2(self.rect.center)
+        self.collision_rect.center = self.pos  # Update collision rect after clamping
         for weapon in self.weapons:
             weapon.update(dt)
+        
+        # Update hit effect timer
+        if self.is_hit:
+            self.hit_timer -= dt
+            if self.hit_timer <= 0:
+                self.is_hit = False
+
+    def take_damage(self, damage):
+        """Apply damage and trigger hit effect"""
+        self.health -= damage
+        self.is_hit = True
+        self.hit_timer = self.hit_duration
 
 class Enemy(pygame.sprite.Sprite):
     def __init__(self, pos, enemy_type="zombie", player_level=1, boss_name=None):
@@ -164,6 +185,21 @@ class Enemy(pygame.sprite.Sprite):
                     self.health = boss_stats["health"] + 15 * player_level
         
         self.rect = self.image.get_rect(center=pos)
+        # Create smaller collision rectangles for more precise collision detection
+        if enemy_type in ENEMY_STATS:
+            # Regular enemies get smaller collision rectangles (about 70% of sprite size)
+            sprite_size = ENEMY_STATS[enemy_type]["sprite_size"]
+            collision_size = (int(sprite_size[0] * 0.7), int(sprite_size[1] * 0.7))
+        elif enemy_type == "boss" and boss_name:
+            # Bosses get collision rectangles that are 60% of their sprite size
+            for milestone_bosses in BOSS_STATS.values():
+                if boss_name in milestone_bosses:
+                    sprite_size = milestone_bosses[boss_name]["sprite_size"]
+                    collision_size = (int(sprite_size[0] * 0.6), int(sprite_size[1] * 0.6))
+                    break
+        
+        self.collision_rect = pygame.Rect(0, 0, collision_size[0], collision_size[1])
+        self.collision_rect.center = pos
         self.pos = Vector2(pos)
 
     def update(self, dt):
@@ -174,6 +210,7 @@ class Enemy(pygame.sprite.Sprite):
             direction = diff.normalize()
         self.pos += direction * self.speed * dt
         self.rect.center = self.pos
+        self.collision_rect.center = self.pos  # Keep collision rect centered
 
 class Projectile(pygame.sprite.Sprite):
     def __init__(self, pos, direction, damage, color=RED, piercing=False, sprite=None):
@@ -396,6 +433,14 @@ def find_nearest_enemy(position):
             nearest = enemy
     return nearest
 
+def check_collision_with_enemies(player):
+    """Custom collision detection using smaller collision rectangles"""
+    colliding_enemies = []
+    for enemy in enemies:
+        if player.collision_rect.colliderect(enemy.collision_rect):
+            colliding_enemies.append(enemy)
+    return colliding_enemies
+
 player = Player()
 all_sprites.add(player)
 
@@ -405,17 +450,28 @@ base_spawn_interval = 3
 game_state = "playing"
 game_result = None
 
+# Debug option - set to True to see collision rectangles
+SHOW_COLLISION_RECTS = False
+
 running = True
 while running:
     dt = clock.tick(60) / 1000.0
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            running = False
+            game_state = "quit_confirm"
         elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_ESCAPE or event.key == pygame.K_q:
+            if event.key == pygame.K_ESCAPE:
                 running = False
-            if game_state == "upgrading":
+            elif event.key == pygame.K_q:
+                if game_state not in ["quit_confirm", "end"]:
+                    game_state = "quit_confirm"
+            if game_state == "quit_confirm":
+                if event.key == pygame.K_y:
+                    running = False
+                elif event.key == pygame.K_n or event.key == pygame.K_ESCAPE:
+                    game_state = "playing"
+            elif game_state == "upgrading":
                 if event.key == pygame.K_1 and player.weapons[0].level < 10:
                     player.weapons[0].upgrade()
                     game_state = "playing"
@@ -428,23 +484,23 @@ while running:
                 elif event.key == pygame.K_4 or event.key == pygame.K_SPACE:
                     player.health = min(100, player.health + 25)
                     game_state = "playing"
-        elif event.type == pygame.MOUSEBUTTONDOWN and game_state == "upgrading":
-            mouse_pos = pygame.mouse.get_pos()
-            for i, rect in enumerate(upgrade_rects):
-                if rect.collidepoint(mouse_pos):
-                    if i < 3 and player.weapons[i].level < 10:
-                        player.weapons[i].upgrade()
-                        game_state = "playing"
-                    elif i == 3:
-                        player.health = min(100, player.health + 25)
-                        game_state = "playing"
-                    break
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            if game_state == "upgrading":
+                mouse_pos = pygame.mouse.get_pos()
+                for i, rect in enumerate(upgrade_rects):
+                    if rect.collidepoint(mouse_pos):
+                        if i < 3 and player.weapons[i].level < 10:
+                            player.weapons[i].upgrade()
+                            game_state = "playing"
+                        elif i == 3:
+                            player.health = min(100, player.health + 25)
+                            game_state = "playing"
+                        break
 
     if game_state == "playing":
         all_sprites.update(dt)
 
         spawn_interval = max(0.7, base_spawn_interval - 0.3 * (player.level - 1))
-        print(spawn_interval)
         spawn_timer += dt
         if spawn_timer >= spawn_interval:
             spawn_timer = 0
@@ -606,12 +662,12 @@ while running:
                     player.health = min(100, player.health + item.value)
                 item.kill()
 
-        # Player vs Enemies
-        colliding_enemies = pygame.sprite.spritecollide(player, enemies, False)
+        # Player vs Enemies - Using custom collision detection with smaller collision rectangles
+        colliding_enemies = check_collision_with_enemies(player)
         if colliding_enemies:
             total_damage_rate = sum(enemy.damage_rate for enemy in colliding_enemies)
             damage = total_damage_rate * dt
-            player.health -= damage
+            player.take_damage(damage)
 
         # Check game over conditions
         if player.health <= 0:
@@ -622,6 +678,19 @@ while running:
     if game_state in ["playing", "upgrading"]:
         screen.fill(BLACK)
         all_sprites.draw(screen)
+        
+        # Optional: Draw collision rectangles for debugging
+        if SHOW_COLLISION_RECTS:
+            pygame.draw.rect(screen, GREEN, player.collision_rect, 2)  # Player collision rect in green
+            for enemy in enemies:
+                pygame.draw.rect(screen, RED, enemy.collision_rect, 1)  # Enemy collision rects in red
+        
+        # Draw red hit effect overlay
+        if player.is_hit:
+            hit_surface = pygame.Surface((screen_width, screen_height))
+            hit_surface.set_alpha(int(100 * (player.hit_timer / player.hit_duration)))  # Fade out effect
+            hit_surface.fill(RED)
+            screen.blit(hit_surface, (0, 0))
 
     if game_state == "upgrading":
         upgrade_rects = []
@@ -635,12 +704,15 @@ while running:
         
         for i, weapon in enumerate(player.weapons):
             x = start_x + i * (button_width + 30)
-            if weapon.level >= 10:
-                upgrade_text = font.render(f"{weapon.stats()} - MAXED OUT", True, WHITE)
-                text_rect = upgrade_text.get_rect(center=(x + button_width//2, 420))
+            if weapon.level >= 15:
+                upgrade_text1 = font.render(f"{weapon.name}: Lv {weapon.level}", True, WHITE)
+                upgrade_text2 = font.render("MAXED OUT", True, YELLOW)
+                text_rect1 = upgrade_text1.get_rect(center=(x + button_width//2, 390))
+                text_rect2 = upgrade_text2.get_rect(center=(x + button_width//2, 420))
                 button_rect = pygame.Rect(x, 350, button_width, 120)
                 pygame.draw.rect(screen, GRAY, button_rect)
-                screen.blit(upgrade_text, text_rect)
+                screen.blit(upgrade_text1, text_rect1)
+                screen.blit(upgrade_text2, text_rect2)
             else:
                 upgrade_text1 = font.render(f"{weapon.name}: Lv {weapon.level}", True, WHITE)
                 upgrade_text2 = font.render(f"Damage: {weapon.damage}", True, WHITE)
@@ -677,6 +749,39 @@ while running:
         screen.blit(stats_text, (screen_width // 2 - stats_text.get_width() // 2, screen_height // 2))
         quit_text = font.render("Press Q to quit", True, WHITE)
         screen.blit(quit_text, (screen_width // 2 - quit_text.get_width() // 2, screen_height // 2 + 50))
+
+    elif game_state == "quit_confirm":
+        # Draw the game in the background but slightly darkened
+        screen.fill(BLACK)
+        all_sprites.draw(screen)
+        
+        # Draw semi-transparent overlay
+        overlay = pygame.Surface((screen_width, screen_height))
+        overlay.set_alpha(150)
+        overlay.fill(BLACK)
+        screen.blit(overlay, (0, 0))
+        
+        # Draw quit confirmation dialog
+        dialog_width = 400
+        dialog_height = 200
+        dialog_x = (screen_width - dialog_width) // 2
+        dialog_y = (screen_height - dialog_height) // 2
+        
+        pygame.draw.rect(screen, GRAY, (dialog_x, dialog_y, dialog_width, dialog_height))
+        pygame.draw.rect(screen, WHITE, (dialog_x, dialog_y, dialog_width, dialog_height), 3)
+        
+        # Dialog text
+        quit_title = large_font.render("Quit Game?", True, WHITE)
+        quit_question = font.render("Are you sure you want to quit?", True, WHITE)
+        quit_yes = font.render("Press Y to quit", True, GREEN)
+        quit_no = font.render("Press N to continue", True, YELLOW)
+        quit_esc = font.render("Press ESC to continue", True, YELLOW)
+        
+        screen.blit(quit_title, (dialog_x + dialog_width//2 - quit_title.get_width()//2, dialog_y + 30))
+        screen.blit(quit_question, (dialog_x + dialog_width//2 - quit_question.get_width()//2, dialog_y + 80))
+        screen.blit(quit_yes, (dialog_x + dialog_width//2 - quit_yes.get_width()//2, dialog_y + 120))
+        screen.blit(quit_no, (dialog_x + dialog_width//2 - quit_no.get_width()//2, dialog_y + 145))
+        screen.blit(quit_esc, (dialog_x + dialog_width//2 - quit_esc.get_width()//2, dialog_y + 170))
 
     if game_state in ["playing", "upgrading"]:
         health_bar_width = 200
