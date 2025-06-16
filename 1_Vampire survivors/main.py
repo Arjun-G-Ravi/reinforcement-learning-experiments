@@ -245,7 +245,7 @@ class Projectile(pygame.sprite.Sprite):
             self.kill()
 
 class Blob(pygame.sprite.Sprite):
-    def __init__(self, pos, damage, speed):
+    def __init__(self, pos, damage, speed, distance=120):
         super().__init__()
         self.size = 30
         self.image = fire_sprite.copy()
@@ -254,7 +254,7 @@ class Blob(pygame.sprite.Sprite):
         self.damage = damage
         self.rotation_speed = speed
         self.angle = 0
-        self.distance = 120
+        self.distance = distance
         self.hit_enemies = set()
 
     def update(self, dt):
@@ -335,6 +335,7 @@ class BlobWeapon:
         self.level = 1
         self.damage = upgrade_blob[self.level]["damage"]
         self.speed = upgrade_blob[self.level]["speed"]
+        self.radius = upgrade_blob[self.level]["radius"]
         self.cooldown = 0.5
         self.timer = 0
         self.blob = None
@@ -351,8 +352,9 @@ class BlobWeapon:
         if self.blob and self.blob.alive():
             self.blob.damage = self.damage
             self.blob.rotation_speed = self.speed
+            self.blob.distance = self.radius
         else:
-            self.blob = Blob(self.player.pos, self.damage, self.speed)
+            self.blob = Blob(self.player.pos, self.damage, self.speed, self.radius)
             self.blob.image = pygame.transform.scale(fire_sprite, (self.blob.size, self.blob.size))
             all_sprites.add(self.blob)
             projectiles.add(self.blob)
@@ -362,10 +364,12 @@ class BlobWeapon:
             self.level += 1
             self.damage = upgrade_blob[self.level]["damage"]
             self.speed = upgrade_blob[self.level]["speed"]
+            self.radius = upgrade_blob[self.level]["radius"]
             self.size = upgrade_blob[self.level]["size"]
             if self.blob and self.blob.alive():
                 self.blob.damage = self.damage
                 self.blob.rotation_speed = self.speed
+                self.blob.distance = self.radius
                 self.blob.size = self.size
                 self.blob.image = pygame.transform.scale(fire_sprite, (self.size, self.size))
 

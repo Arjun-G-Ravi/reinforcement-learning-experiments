@@ -148,21 +148,21 @@ upgrade_gun = {
 }
 
 upgrade_blob = {
-    1: {"damage": 3, "speed": 1, "size": 20, "radius": 10},
-    2: {"damage": 6, "speed": 1.2, "size": 22, "radius": 11},
-    3: {"damage": 10, "speed": 1.5, "size": 24, "radius": 12},
-    4: {"damage": 10, "speed": 1.75, "size": 26, "radius": 13},
-    5: {"damage": 12, "speed": 2, "size": 32, "radius": 16},
-    6: {"damage": 15, "speed": 2.5, "size": 36, "radius": 18},
-    7: {"damage": 18, "speed": 3, "size": 40, "radius": 20},
-    8: {"damage": 20, "speed": 3.5, "size": 44, "radius": 22},
-    9: {"damage": 25, "speed": 4, "size": 48, "radius": 24},
-    10: {"damage": 30, "speed": 4.2, "size": 50, "radius": 25},
-    11: {"damage": 33, "speed": 4.5, "size": 50, "radius": 25},
-    12: {"damage": 36, "speed": 4.7, "size": 52, "radius": 26},
-    13: {"damage": 40, "speed": 4.5, "size": 54, "radius": 27},
-    14: {"damage": 50, "speed": 4, "size": 60, "radius": 30},
-    15: {"damage": 50, "speed": 5, "size": 70, "radius": 35},
+    1: {"damage": 3, "speed": 1, "size": 30, "radius": 100},
+    2: {"damage": 6, "speed": 1.2, "size": 32, "radius": 100},
+    3: {"damage": 10, "speed": 1.5, "size": 34, "radius": 100},
+    4: {"damage": 10, "speed": 1.75, "size": 36, "radius": 120},
+    5: {"damage": 12, "speed": 2, "size": 32, "radius": 120},
+    6: {"damage": 15, "speed": 2.5, "size": 36, "radius": 150},
+    7: {"damage": 18, "speed": 3, "size": 40, "radius": 150},
+    8: {"damage": 20, "speed": 3.5, "size": 44, "radius": 150},
+    9: {"damage": 25, "speed": 4, "size": 48, "radius": 180},
+    10: {"damage": 30, "speed": 4.2, "size": 50, "radius": 180},
+    11: {"damage": 33, "speed": 4.5, "size": 50, "radius": 180},
+    12: {"damage": 36, "speed": 4.7, "size": 52, "radius": 200},
+    13: {"damage": 40, "speed": 4.5, "size": 54, "radius": 200},
+    14: {"damage": 50, "speed": 4, "size": 60, "radius": 200},
+    15: {"damage": 50, "speed": 5, "size": 80, "radius": 250},
 }
 
 upgrade_heavy = {
