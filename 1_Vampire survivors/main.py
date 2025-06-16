@@ -63,6 +63,7 @@ emerald_sprite = load_sprite("icons8-emerald-64.png", ITEM_STATS["emerald"]["spr
 # Projectile sprites
 red_orb_sprite = load_sprite("red-orb.png", (15, 15))
 yellow_orb_sprite = load_sprite("yellow-orb.png", (20, 20))
+snake_sprite = load_sprite("icons8-snake-64.png", (30, 30))
 
 font = pygame.font.SysFont(None, 28)
 large_font = pygame.font.SysFont(None, 60)
@@ -215,33 +216,86 @@ class Enemy(pygame.sprite.Sprite):
         if enemy_type == "boss" and boss_name == "devil":
             self.fireball_timer = 0.0
             self.fireball_cooldown = random.uniform(2.0, 4.0)  # Random cooldown between 2-4 seconds
+            # Behavior cycling variables
+            self.behavior_mode = "chase"  # "chase" or "flee"
+            self.behavior_timer = 0.0
+            self.chase_duration = random.uniform(3.0, 5.0)  # Chase for 3-5 seconds
+            self.flee_duration = random.uniform(4.0, 6.0)   # Flee for 4-6 seconds
+        
+        # Medusa and Echidna snake shooting variables
+        if enemy_type == "boss" and boss_name in ["medusa", "echidna"]:
+            self.snake_timer = 0.0
+            self.snake_cooldown = random.uniform(0.5, 2.0)  # Random cooldown between 2-4 seconds
 
     def update(self, dt):
-        # Special AI for devil boss - tries to stay away from player
+        # Special AI for devil boss - cycles between chase and flee behavior
         if self.enemy_type == "boss" and self.boss_name == "devil":
+            # Update behavior timer
+            self.behavior_timer += dt
+            
+            # Check if it's time to switch behavior
+            if self.behavior_mode == "chase" and self.behavior_timer >= self.chase_duration:
+                self.behavior_mode = "flee"
+                self.behavior_timer = 0.0
+                self.flee_duration = random.randint(2.0, 20.0)
+            elif self.behavior_mode == "flee" and self.behavior_timer >= self.flee_duration:
+                self.behavior_mode = "chase"
+                self.behavior_timer = 0.0
+                self.chase_duration = random.randint(2.0, 20.0)
+            
             diff = player.pos - self.pos
             if diff.length_squared() == 0:  # Check if positions are identical
                 direction = Vector2(0, 0)
             else:
-                # Move away from player (reverse direction)
-                direction = -diff.normalize()
-            
-            # Keep devil boss within screen bounds but away from player
-            new_pos = self.pos + direction * self.speed * dt
-            
-            # Check screen boundaries and adjust movement
-            margin = 50  # Keep devil at least 50 pixels from screen edge
-            if new_pos.x < margin:
-                direction.x = abs(direction.x)  # Force movement right
-            elif new_pos.x > screen_width - margin:
-                direction.x = -abs(direction.x)  # Force movement left
-                
-            if new_pos.y < margin:
-                direction.y = abs(direction.y)  # Force movement down
-            elif new_pos.y > screen_height - margin:
-                direction.y = -abs(direction.y)  # Force movement up
+                if self.behavior_mode == "chase":
+                    # Chase behavior - move toward player
+                    direction = diff.normalize()
+                else:
+                    # Flee behavior - move away from player but avoid corners
+                    direction = -diff.normalize()
+                    
+                    # Enhanced corner avoidance during flee mode
+                    margin = 100  # Larger margin to avoid corners
+                    center_x, center_y = screen_width / 2, screen_height / 2
+                    
+                    # If getting too close to edges, bias movement toward center
+                    if self.pos.x < margin:
+                        direction.x += 0.5  # Pull toward center
+                    elif self.pos.x > screen_width - margin:
+                        direction.x -= 0.5  # Pull toward center
+                        
+                    if self.pos.y < margin:
+                        direction.y += 0.5  # Pull toward center
+                    elif self.pos.y > screen_height - margin:
+                        direction.y -= 0.5  # Pull toward center
+                    
+                    # If in a corner, force movement toward center
+                    corner_margin = 150
+                    if ((self.pos.x < corner_margin and self.pos.y < corner_margin) or
+                        (self.pos.x > screen_width - corner_margin and self.pos.y < corner_margin) or
+                        (self.pos.x < corner_margin and self.pos.y > screen_height - corner_margin) or
+                        (self.pos.x > screen_width - corner_margin and self.pos.y > screen_height - corner_margin)):
+                        # Force movement toward screen center
+                        center_direction = Vector2(center_x - self.pos.x, center_y - self.pos.y)
+                        if center_direction.length() > 0:
+                            direction = center_direction.normalize()
+                    
+                    # Normalize direction after modifications
+                    if direction.length() > 0:
+                        direction = direction.normalize()
             
             self.pos += direction * self.speed * dt
+            
+            # Keep within absolute screen bounds as final safety
+            margin = 30
+            if self.pos.x < margin:
+                self.pos.x = margin
+            elif self.pos.x > screen_width - margin:
+                self.pos.x = screen_width - margin
+            if self.pos.y < margin:
+                self.pos.y = margin
+            elif self.pos.y > screen_height - margin:
+                self.pos.y = screen_height - margin
             
             # Fireball shooting logic
             self.fireball_timer += dt
@@ -253,6 +307,25 @@ class Enemy(pygame.sprite.Sprite):
                 # Reset timer with new random cooldown
                 self.fireball_timer = 0.0
                 self.fireball_cooldown = random.uniform(2.0, 4.0)
+        elif self.enemy_type == "boss" and self.boss_name in ["medusa", "echidna"]:
+            # Snake shooting bosses - move toward player
+            diff = player.pos - self.pos
+            if diff.length_squared() == 0:  # Check if positions are identical
+                direction = Vector2(0, 0)
+            else:
+                direction = diff.normalize()
+            self.pos += direction * self.speed * dt
+            
+            # Snake shooting logic
+            self.snake_timer += dt
+            if self.snake_timer >= self.snake_cooldown:
+                # Shoot snake at player
+                snake = Snake(self.pos, player.pos)
+                all_sprites.add(snake)
+                projectiles.add(snake)
+                # Reset timer with new random cooldown
+                self.snake_timer = 0.0
+                self.snake_cooldown = random.uniform(.5, 2.0)
         else:
             # Normal AI for all other enemies - move toward player
             diff = player.pos - self.pos
@@ -310,10 +383,9 @@ class Blob(pygame.sprite.Sprite):
         self.rect.center = self.pos
 
 class Fireball(pygame.sprite.Sprite):
-    def __init__(self, pos, target_pos, damage=25):
+    def __init__(self, pos, target_pos, damage=40):
         super().__init__()
-        self.image = pygame.Surface((15, 15))
-        self.image.fill((255, 100, 0))  # Orange color for fireball
+        self.image = pygame.transform.scale(fire_sprite, (60, 60))
         self.rect = self.image.get_rect(center=pos)
         self.pos = Vector2(pos)
         
@@ -323,6 +395,27 @@ class Fireball(pygame.sprite.Sprite):
         self.velocity = direction * 600
         self.damage = damage
         self.lifetime = 3.0  # Lives longer since it's targeting player
+
+    def update(self, dt):
+        self.pos += self.velocity * dt
+        self.rect.center = self.pos
+        self.lifetime -= dt
+        if self.lifetime <= 0 or not screen_rect.contains(self.rect):
+            self.kill()
+
+class Snake(pygame.sprite.Sprite):
+    def __init__(self, pos, target_pos, damage=10):
+        super().__init__()
+        self.image = snake_sprite.copy()
+        self.rect = self.image.get_rect(center=pos)
+        self.pos = Vector2(pos)
+        
+        # Calculate direction toward player
+        direction = (target_pos - self.pos).normalize()
+        # Snake speed is 200
+        self.velocity = direction * 100
+        self.damage = damage
+        self.lifetime = 3.0  # Lives longer since it moves slower
 
     def update(self, dt):
         self.pos += self.velocity * dt
@@ -610,7 +703,11 @@ while running:
     if game_state == "playing":
         all_sprites.update(dt)
 
-        spawn_interval = max(0.7, base_spawn_interval - 0.3 * (player.level - 1))
+        # Spawn rate changes to 0.5 after level 30
+        if player.level >= 30:
+            spawn_interval = 0.5
+        else:
+            spawn_interval = max(0.7, base_spawn_interval - 0.3 * (player.level - 1))
         spawn_timer += dt
         if spawn_timer >= spawn_interval:
             spawn_timer = 0
@@ -633,7 +730,7 @@ while running:
                 elif player.level < 20: enemy_type = random.choices(["zombie", "vampire", "golem", "mini-devil"], weights=[15, 45, 20, 20], k=1)[0]
                 elif player.level < 25: enemy_type = random.choices(["zombie", "vampire", "golem", "mini-devil"], weights=[5, 5, 40, 50], k=1)[0]
                 elif player.level < 30: enemy_type = random.choices(["zombie", "vampire", "golem", "mini-devil"], weights=[0, 25, 25, 50], k=1)[0]
-                else: enemy_type = random.choices(["zombie", "vampire", "golem", "mini-devil"], weights=[0, 20, 30, 50], k=1)[0]
+                else: enemy_type = random.choices(["zombie", "vampire", "golem", "mini-devil"], weights=[0, 20, 10, 70], k=1)[0]
             else:
                 # Before kill 500, no mini-devils
                 if player.level < 5: enemy_type = random.choices(["zombie", "vampire", "golem"], weights=[95, 5, 0], k=1)[0]
@@ -714,8 +811,8 @@ while running:
                     projectile.hit_enemies.clear()
                     projectile.angle -= 2 * math.pi
             else:
-                # Skip fireball vs enemy collision - fireballs only hit the player
-                if isinstance(projectile, Fireball):
+                # Skip fireball and snake vs enemy collision - boss projectiles only hit the player
+                if isinstance(projectile, (Fireball, Snake)):
                     continue
                     
                 hits = pygame.sprite.spritecollide(projectile, enemies, False)
@@ -760,7 +857,7 @@ while running:
                                 boss_name = "medusa"
                             elif player.kill_count == 401:
                                 boss_name = "echidna"
-                            elif player.kill_count == 10:
+                            elif player.kill_count == 500:
                                 boss_name = "devil"
                             
                             if boss_name:
@@ -809,9 +906,9 @@ while running:
             damage = total_damage_rate * dt
             player.take_damage(damage)
 
-        # Player vs Fireballs - Check if player gets hit by devil fireballs
+        # Player vs Fireballs and Snakes - Check if player gets hit by boss projectiles
         for projectile in projectiles:
-            if isinstance(projectile, Fireball):
+            if isinstance(projectile, (Fireball, Snake)):
                 if player.collision_rect.colliderect(projectile.rect):
                     player.take_damage(projectile.damage)
                     projectile.kill()
