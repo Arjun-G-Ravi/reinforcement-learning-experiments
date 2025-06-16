@@ -139,12 +139,12 @@ upgrade_gun = {
     7: {"damage": 20, "cooldown": 0.7},
     8: {"damage": 25, "cooldown": 0.6},
     9: {"damage": 30, "cooldown": 0.5},
-    10: {"damage": 30, "cooldown": 0.3},
-    11: {"damage": 3, "cooldown": 0.2},
-    12: {"damage": 35, "cooldown": 0.3},
-    13: {"damage": 37, "cooldown": 0.2},
-    14: {"damage": 40, "cooldown": 0.2},
-    15: {"damage": 50, "cooldown": 0.2},
+    10: {"damage": 30, "cooldown": 0.4},
+    11: {"damage": 32, "cooldown": 0.5},
+    12: {"damage": 35, "cooldown": 0.5},
+    13: {"damage": 37, "cooldown": 0.5},
+    14: {"damage": 40, "cooldown": 0.5},
+    15: {"damage": 50, "cooldown": 0.5},
 }
 
 upgrade_blob = {
@@ -162,7 +162,7 @@ upgrade_blob = {
     12: {"damage": 36, "speed": 4.7, "size": 52},
     13: {"damage": 40, "speed": 4.5, "size": 54},
     14: {"damage": 50, "speed": 4, "size": 60},
-    15: {"damage": 50, "speed": 5, "size": 60},
+    15: {"damage": 50, "speed": 5, "size": 70},
 }
 
 upgrade_heavy = {
@@ -172,13 +172,13 @@ upgrade_heavy = {
     4: {"damage": 15, "cooldown": 25.0, "num_shots": 8},
     5: {"damage": 20, "cooldown": 25.0, "num_shots": 8},
     6: {"damage": 20, "cooldown": 25.0, "num_shots": 16},
-    7: {"damage": 25, "cooldown": 22.0, "num_shots": 16},
-    8: {"damage": 25, "cooldown": 22.0, "num_shots": 32},
-    9: {"damage": 30, "cooldown": 22.0, "num_shots": 32},
-    10: {"damage": 35, "cooldown": 30.0, "num_shots": 32},
-    11: {"damage": 35, "cooldown": 30.0, "num_shots": 40},
-    12: {"damage": 40, "cooldown": 30.0, "num_shots": 40},
-    13: {"damage": 40, "cooldown": 25.0, "num_shots": 50},
+    7: {"damage": 25, "cooldown": 25.0, "num_shots": 16},
+    8: {"damage": 25, "cooldown": 25.0, "num_shots": 32},
+    9: {"damage": 30, "cooldown": 25.0, "num_shots": 32},
+    10: {"damage": 35, "cooldown": 20.0, "num_shots": 32},
+    11: {"damage": 35, "cooldown": 20.0, "num_shots": 40},
+    12: {"damage": 40, "cooldown": 20.0, "num_shots": 40},
+    13: {"damage": 40, "cooldown": 20.0, "num_shots": 50},
     14: {"damage": 40, "cooldown": 20.0, "num_shots": 64},
-    15: {"damage": 40, "cooldown": 20.0, "num_shots": 64},
+    15: {"damage": 50, "cooldown": 20.0, "num_shots": 64},
 }
