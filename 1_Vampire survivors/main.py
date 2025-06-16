@@ -210,14 +210,58 @@ class Enemy(pygame.sprite.Sprite):
         self.collision_rect = pygame.Rect(0, 0, collision_size[0], collision_size[1])
         self.collision_rect.center = pos
         self.pos = Vector2(pos)
+        
+        # Devil boss fireball shooting variables
+        if enemy_type == "boss" and boss_name == "devil":
+            self.fireball_timer = 0.0
+            self.fireball_cooldown = random.uniform(2.0, 4.0)  # Random cooldown between 2-4 seconds
 
     def update(self, dt):
-        diff = player.pos - self.pos
-        if diff.length_squared() == 0:  # Check if positions are identical
-            direction = Vector2(0, 0)
+        # Special AI for devil boss - tries to stay away from player
+        if self.enemy_type == "boss" and self.boss_name == "devil":
+            diff = player.pos - self.pos
+            if diff.length_squared() == 0:  # Check if positions are identical
+                direction = Vector2(0, 0)
+            else:
+                # Move away from player (reverse direction)
+                direction = -diff.normalize()
+            
+            # Keep devil boss within screen bounds but away from player
+            new_pos = self.pos + direction * self.speed * dt
+            
+            # Check screen boundaries and adjust movement
+            margin = 50  # Keep devil at least 50 pixels from screen edge
+            if new_pos.x < margin:
+                direction.x = abs(direction.x)  # Force movement right
+            elif new_pos.x > screen_width - margin:
+                direction.x = -abs(direction.x)  # Force movement left
+                
+            if new_pos.y < margin:
+                direction.y = abs(direction.y)  # Force movement down
+            elif new_pos.y > screen_height - margin:
+                direction.y = -abs(direction.y)  # Force movement up
+            
+            self.pos += direction * self.speed * dt
+            
+            # Fireball shooting logic
+            self.fireball_timer += dt
+            if self.fireball_timer >= self.fireball_cooldown:
+                # Shoot fireball at player
+                fireball = Fireball(self.pos, player.pos)
+                all_sprites.add(fireball)
+                projectiles.add(fireball)
+                # Reset timer with new random cooldown
+                self.fireball_timer = 0.0
+                self.fireball_cooldown = random.uniform(2.0, 4.0)
         else:
-            direction = diff.normalize()
-        self.pos += direction * self.speed * dt
+            # Normal AI for all other enemies - move toward player
+            diff = player.pos - self.pos
+            if diff.length_squared() == 0:  # Check if positions are identical
+                direction = Vector2(0, 0)
+            else:
+                direction = diff.normalize()
+            self.pos += direction * self.speed * dt
+            
         self.rect.center = self.pos
         self.collision_rect.center = self.pos  # Keep collision rect centered
 
@@ -264,6 +308,28 @@ class Blob(pygame.sprite.Sprite):
             player.pos.y + math.sin(self.angle) * self.distance
         )
         self.rect.center = self.pos
+
+class Fireball(pygame.sprite.Sprite):
+    def __init__(self, pos, target_pos, damage=25):
+        super().__init__()
+        self.image = pygame.Surface((15, 15))
+        self.image.fill((255, 100, 0))  # Orange color for fireball
+        self.rect = self.image.get_rect(center=pos)
+        self.pos = Vector2(pos)
+        
+        # Calculate direction toward player
+        direction = (target_pos - self.pos).normalize()
+        # Fireball speed is twice the player's speed (300 * 2 = 600)
+        self.velocity = direction * 600
+        self.damage = damage
+        self.lifetime = 3.0  # Lives longer since it's targeting player
+
+    def update(self, dt):
+        self.pos += self.velocity * dt
+        self.rect.center = self.pos
+        self.lifetime -= dt
+        if self.lifetime <= 0 or not screen_rect.contains(self.rect):
+            self.kill()
 
 class ExpItem(pygame.sprite.Sprite):
     def __init__(self, pos):
@@ -648,6 +714,10 @@ while running:
                     projectile.hit_enemies.clear()
                     projectile.angle -= 2 * math.pi
             else:
+                # Skip fireball vs enemy collision - fireballs only hit the player
+                if isinstance(projectile, Fireball):
+                    continue
+                    
                 hits = pygame.sprite.spritecollide(projectile, enemies, False)
                 for enemy in hits:
                     if enemy not in projectile.hit_enemies:
@@ -690,7 +760,7 @@ while running:
                                 boss_name = "medusa"
                             elif player.kill_count == 401:
                                 boss_name = "echidna"
-                            elif player.kill_count == 500:
+                            elif player.kill_count == 10:
                                 boss_name = "devil"
                             
                             if boss_name:
@@ -738,6 +808,13 @@ while running:
             total_damage_rate = sum(enemy.damage_rate for enemy in colliding_enemies)
             damage = total_damage_rate * dt
             player.take_damage(damage)
+
+        # Player vs Fireballs - Check if player gets hit by devil fireballs
+        for projectile in projectiles:
+            if isinstance(projectile, Fireball):
+                if player.collision_rect.colliderect(projectile.rect):
+                    player.take_damage(projectile.damage)
+                    projectile.kill()
 
         # Check game over conditions
         if player.health <= 0:
