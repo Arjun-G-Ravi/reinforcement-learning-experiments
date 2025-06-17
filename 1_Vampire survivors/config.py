@@ -24,7 +24,7 @@ ENEMY_STATS = {
     "mini-devil": {
         "speed": (50, 200),  # Random range
         "health": (50, 300),  # Random range
-        "damage_rate": (10, 100),  # Random range
+        "damage_rate": (10, 50),  # Random range
         "sprite_size": (50, 50)
     }
 }
@@ -148,21 +148,21 @@ upgrade_gun = {
 }
 
 upgrade_blob = {
-    1: {"damage": 3, "speed": 1, "size": 30, "radius": 100},
-    2: {"damage": 6, "speed": 1.2, "size": 32, "radius": 100},
-    3: {"damage": 10, "speed": 1.5, "size": 34, "radius": 100},
-    4: {"damage": 10, "speed": 1.75, "size": 36, "radius": 120},
-    5: {"damage": 12, "speed": 2, "size": 32, "radius": 120},
-    6: {"damage": 15, "speed": 2.5, "size": 36, "radius": 150},
-    7: {"damage": 18, "speed": 3, "size": 40, "radius": 150},
-    8: {"damage": 20, "speed": 3.5, "size": 44, "radius": 150},
-    9: {"damage": 25, "speed": 4, "size": 48, "radius": 180},
-    10: {"damage": 30, "speed": 4.2, "size": 50, "radius": 180},
-    11: {"damage": 33, "speed": 4.5, "size": 50, "radius": 180},
-    12: {"damage": 36, "speed": 4.7, "size": 52, "radius": 200},
-    13: {"damage": 40, "speed": 4.5, "size": 54, "radius": 200},
-    14: {"damage": 50, "speed": 4, "size": 60, "radius": 200},
-    15: {"damage": 50, "speed": 5, "size": 80, "radius": 250},
+    1: {"damage": 5, "speed": 1, "size": 30, "radius": 100, "count": 1},
+    2: {"damage": 6, "speed": 1.2, "size": 32, "radius": 100, "count": 1},
+    3: {"damage": 10, "speed": 1.5, "size": 34, "radius": 100, "count": 2},
+    4: {"damage": 10, "speed": 1.75, "size": 36, "radius": 120, "count": 2},
+    5: {"damage": 12, "speed": 2, "size": 32, "radius": 120, "count": 2},
+    6: {"damage": 15, "speed": 2, "size": 36, "radius": 150, "count": 2},
+    7: {"damage": 18, "speed": 1, "size": 40, "radius": 150, "count": 3},
+    8: {"damage": 20, "speed": 1.5, "size": 44, "radius": 150, "count": 3},
+    9: {"damage": 25, "speed": 2, "size": 48, "radius": 180, "count": 3},
+    10: {"damage": 25, "speed": 1, "size": 50, "radius": 180, "count": 4},
+    11: {"damage": 33, "speed": 1.5, "size": 50, "radius": 180, "count": 4},
+    12: {"damage": 36, "speed": 1.7, "size": 52, "radius": 200, "count": 4},
+    13: {"damage": 40, "speed": 2, "size": 54, "radius": 200, "count": 54},
+    14: {"damage": 50, "speed": 1, "size": 60, "radius": 200, "count": 6},
+    15: {"damage": 50, "speed": 2, "size": 80, "radius": 250, "count": 6},
 }
 
 upgrade_heavy = {

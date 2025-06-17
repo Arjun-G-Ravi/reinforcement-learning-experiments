@@ -362,7 +362,7 @@ class Projectile(pygame.sprite.Sprite):
             self.kill()
 
 class Blob(pygame.sprite.Sprite):
-    def __init__(self, pos, damage, speed, distance=120):
+    def __init__(self, pos, damage, speed, distance=120, index=0, total_count=1):
         super().__init__()
         self.size = 30
         self.image = fire_sprite.copy()
@@ -370,7 +370,8 @@ class Blob(pygame.sprite.Sprite):
         self.pos = Vector2(pos)
         self.damage = damage
         self.rotation_speed = speed
-        self.angle = 0
+        # Calculate initial angle based on index and total count to spread them evenly
+        self.angle = (2 * math.pi * index) / total_count if total_count > 0 else 0
         self.distance = distance
         self.hit_enemies = set()
 
@@ -495,28 +496,53 @@ class BlobWeapon:
         self.damage = upgrade_blob[self.level]["damage"]
         self.speed = upgrade_blob[self.level]["speed"]
         self.radius = upgrade_blob[self.level]["radius"]
+        self.size = upgrade_blob[self.level]["size"]
+        self.count = upgrade_blob[self.level]["count"]
         self.cooldown = 0.5
         self.timer = 0
-        self.blob = None
+        self.blobs = []
 
     def update(self, dt):
         self.timer += dt
+        
         if self.timer >= self.cooldown:
             self.fire()
             self.timer = 0
-        if self.blob:
-            self.blob.update(dt)
+        
+        # Update all existing blobs
+        for blob in self.blobs[:]:  # Use slice copy to avoid modification during iteration
+            if blob.alive():
+                blob.update(dt)
+            else:
+                self.blobs.remove(blob)
 
     def fire(self):
-        if self.blob and self.blob.alive():
-            self.blob.damage = self.damage
-            self.blob.rotation_speed = self.speed
-            self.blob.distance = self.radius
+        # Remove any dead blobs first
+        self.blobs = [blob for blob in self.blobs if blob.alive()]
+        
+        # If we have fewer blobs than required count, create new ones
+        if len(self.blobs) < self.count:
+            # Remove all existing blobs to recreate the formation
+            for blob in self.blobs:
+                blob.kill()
+            self.blobs.clear()
+            
+            # Create the required number of blobs
+            for i in range(self.count):
+                blob = Blob(self.player.pos, self.damage, self.speed, self.radius, i, self.count)
+                blob.size = self.size
+                blob.image = pygame.transform.scale(fire_sprite, (self.size, self.size))
+                all_sprites.add(blob)
+                projectiles.add(blob)
+                self.blobs.append(blob)
         else:
-            self.blob = Blob(self.player.pos, self.damage, self.speed, self.radius)
-            self.blob.image = pygame.transform.scale(fire_sprite, (self.blob.size, self.blob.size))
-            all_sprites.add(self.blob)
-            projectiles.add(self.blob)
+            # Update existing blobs with current stats
+            for blob in self.blobs:
+                blob.damage = self.damage
+                blob.rotation_speed = self.speed
+                blob.distance = self.radius
+                blob.size = self.size
+                blob.image = pygame.transform.scale(fire_sprite, (self.size, self.size))
 
     def upgrade(self):
         if self.level < 15:
@@ -525,23 +551,27 @@ class BlobWeapon:
             self.speed = upgrade_blob[self.level]["speed"]
             self.radius = upgrade_blob[self.level]["radius"]
             self.size = upgrade_blob[self.level]["size"]
-            if self.blob and self.blob.alive():
-                self.blob.damage = self.damage
-                self.blob.rotation_speed = self.speed
-                self.blob.distance = self.radius
-                self.blob.size = self.size
-                self.blob.image = pygame.transform.scale(fire_sprite, (self.size, self.size))
+            self.count = upgrade_blob[self.level]["count"]
+            
+            # Update existing blobs with new stats
+            for blob in self.blobs:
+                if blob.alive():
+                    blob.damage = self.damage
+                    blob.rotation_speed = self.speed
+                    blob.distance = self.radius
+                    blob.size = self.size
+                    blob.image = pygame.transform.scale(fire_sprite, (self.size, self.size))
 
     def stats(self):
-        return f"Blob (Lvl {self.level}/15): Dmg {self.damage}, Spd {self.speed:.1f}"
+        return f"Blob (Lvl {self.level}/15): Dmg {self.damage}, Cnt {self.count}"
 
     def stats_next_level(self):
         if self.level < 15:
             next_level = self.level + 1
             dmg_diff = upgrade_blob[next_level]["damage"] - self.damage
-            spd_diff = upgrade_blob[next_level]["speed"] - self.speed
-            return f"Blob (Lvl {next_level}/15): Dmg {upgrade_blob[next_level]['damage']} (+{dmg_diff}), Spd {upgrade_blob[next_level]['speed']:.1f} (+{spd_diff:.1f})"
-        return f"Blob (Maxed): Dmg {self.damage}, Spd {self.speed:.1f}"
+            cnt_diff = upgrade_blob[next_level]["count"] - self.count
+            return f"Blob (Lvl {next_level}/15): Dmg {upgrade_blob[next_level]['damage']} (+{dmg_diff}), Cnt {upgrade_blob[next_level]['count']} (+{cnt_diff})"
+        return f"Blob (Maxed): Dmg {self.damage}, Cnt {self.count}"
 
 class HeavyAttack:
     def __init__(self, player):
@@ -705,9 +735,9 @@ while running:
 
         # Spawn rate changes to 0.5 after level 30
         if player.level >= 30:
-            spawn_interval = 0.5
+            spawn_interval = 0.75
         else:
-            spawn_interval = max(0.7, base_spawn_interval - 0.3 * (player.level - 1))
+            spawn_interval = max(1, base_spawn_interval - 0.3 * (player.level - 1))
         spawn_timer += dt
         if spawn_timer >= spawn_interval:
             spawn_timer = 0
@@ -959,8 +989,12 @@ while running:
                 screen.blit(upgrade_text2, text_rect2)
             else:
                 upgrade_text1 = font.render(f"{weapon.name}: Lv {weapon.level}", True, WHITE)
-                upgrade_text2 = font.render(f"Damage: {weapon.damage}", True, WHITE)
-                upgrade_text3 = font.render(f"Cooldown: {weapon.cooldown}", True, WHITE)
+                if weapon.name == "Blob":
+                    upgrade_text2 = font.render(f"Damage: {weapon.damage}", True, WHITE)
+                    upgrade_text3 = font.render(f"Count: {weapon.count}", True, WHITE)
+                else:
+                    upgrade_text2 = font.render(f"Damage: {weapon.damage}", True, WHITE)
+                    upgrade_text3 = font.render(f"Cooldown: {weapon.cooldown}", True, WHITE)
                 text_rect1 = upgrade_text1.get_rect(center=(x + button_width//2, 380))
                 text_rect2 = upgrade_text2.get_rect(center=(x + button_width//2, 410))
                 text_rect3 = upgrade_text3.get_rect(center=(x + button_width//2, 440))
