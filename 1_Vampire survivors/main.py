@@ -1004,10 +1004,12 @@ while running:
         screen.fill(BLACK)
         all_sprites.draw(screen)
         
-        # Draw boss health bars
-        for enemy in enemies:
-            if enemy.enemy_type == "boss":
-                draw_boss_health_bar(screen, enemy)
+        # Only draw boss health bars during playing state
+        if game_state == "playing":
+            # Draw boss health bars
+            for enemy in enemies:
+                if enemy.enemy_type == "boss":
+                    draw_boss_health_bar(screen, enemy)
         
         # Optional: Draw collision rectangles for debugging
         if SHOW_COLLISION_RECTS:
@@ -1015,8 +1017,8 @@ while running:
             for enemy in enemies:
                 pygame.draw.rect(screen, RED, enemy.collision_rect, 1)  # Enemy collision rects in red
         
-        # Draw red hit effect overlay
-        if player.is_hit:
+        # Draw red hit effect overlay (only during playing state)
+        if game_state == "playing" and player.is_hit:
             hit_surface = pygame.Surface((screen_width, screen_height))
             hit_surface.set_alpha(int(100 * (player.hit_timer / player.hit_duration)))  # Fade out effect
             hit_surface.fill(RED)
@@ -1140,11 +1142,6 @@ while running:
                 color = WHITE
             stat_text = font.render(weapon.stats(), True, color)
             screen.blit(stat_text, (screen_width - 350, 15 + i * 35))
-
-    # Draw boss health bars
-    for enemy in enemies:
-        if enemy.enemy_type == "boss":
-            draw_boss_health_bar(screen, enemy)
 
     pygame.display.flip()
 

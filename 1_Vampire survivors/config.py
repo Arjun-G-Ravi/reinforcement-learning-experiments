@@ -142,8 +142,8 @@ upgrade_gun = {
     10: {"damage": 30, "cooldown": 0.4},
     11: {"damage": 32, "cooldown": 0.5},
     12: {"damage": 35, "cooldown": 0.5},
-    13: {"damage": 37, "cooldown": 0.5},
-    14: {"damage": 40, "cooldown": 0.5},
+    13: {"damage": 37, "cooldown": 0.4},
+    14: {"damage": 40, "cooldown": 0.4},
     15: {"damage": 20, "cooldown": 0.1},
 }
 
@@ -162,7 +162,7 @@ upgrade_blob = {
     12: {"damage": 12, "speed": 1, "size": 52, "radius": 200, "count": 6},
     13: {"damage": 12, "speed": 1.1, "size": 54, "radius": 200, "count": 7},
     14: {"damage": 15, "speed": 1.2, "size": 60, "radius": 200, "count": 7},
-    15: {"damage": 10, "speed": 2, "size": 80, "radius": 250, "count": 8},
+    15: {"damage": 15, "speed": 2, "size": 60, "radius": 250, "count": 8},
 }
 
 upgrade_heavy = {
