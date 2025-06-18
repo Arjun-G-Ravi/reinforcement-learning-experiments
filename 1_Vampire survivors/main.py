@@ -43,9 +43,9 @@ golem_sprite = load_sprite("icons8-golem-64.png", ENEMY_STATS["golem"]["sprite_s
 # Boss sprites
 bigfoot_sprite = load_sprite("icons8-bigfoot-64.png", BOSS_STATS[50]["bigfoot"]["sprite_size"])
 minotaur_sprite = load_sprite("icons8-minotaur-64.png", BOSS_STATS[50]["minotaur"]["sprite_size"])
+monster_sprite = load_sprite("icons8-monster-64.png", BOSS_STATS[100]["monster"]["sprite_size"])
 cyclops_sprite = load_sprite("icons8-cyclops-64.png", BOSS_STATS[150]["cyclops"]["sprite_size"])
 giant_sprite = load_sprite("icons8-giant-64.png", BOSS_STATS[150]["giant"]["sprite_size"])
-monster_sprite = load_sprite("icons8-monster-64.png", BOSS_STATS[150]["monster"]["sprite_size"])
 cerberus_sprite = load_sprite("icons8-cerberus-64.png", BOSS_STATS[250]["cerberus"]["sprite_size"])
 chimera_sprite = load_sprite("icons8-chimera-64.png", BOSS_STATS[250]["chimera"]["sprite_size"])
 medusa_sprite = load_sprite("icons8-medusa-64.png", BOSS_STATS[350]["medusa"]["sprite_size"])
@@ -226,9 +226,9 @@ class Enemy(pygame.sprite.Sprite):
             self.flee_duration = random.uniform(4.0, 6.0)   # Flee for 4-6 seconds
         
         # Medusa and Echidna snake shooting variables
-        if enemy_type == "boss" and boss_name in ["medusa", "echidna"]:
+        if enemy_type == "boss" and boss_name in ["echidna"]:
             self.snake_timer = 0.0
-            self.snake_cooldown = random.uniform(0.1, 1.2)  # Random cooldown between 2-4 seconds
+            self.snake_cooldown = random.uniform(0.1, 0.5)  # Random cooldown between 2-4 seconds
 
     def update(self, dt):
         # Special AI for devil boss - cycles between chase and flee behavior
@@ -417,9 +417,9 @@ class Snake(pygame.sprite.Sprite):
         # Calculate direction toward player
         direction = (target_pos - self.pos).normalize()
         # Snake speed is 200
-        self.velocity = direction * 100
+        self.velocity = direction * 200
         self.damage = damage
-        self.lifetime = 3.0  # Lives longer since it moves slower
+        self.lifetime = 5.0  # Lives longer since it moves slower
 
     def update(self, dt):
         self.pos += self.velocity * dt
@@ -649,8 +649,7 @@ def check_collision_with_enemies(player):
     return colliding_enemies
 
 def create_boss_drops(center_pos):
-    """Create 1-5 random items when a boss dies"""
-    num_drops = random.randint(5,10)
+    num_drops = 5
     items_created = []
     
     for i in range(num_drops):
@@ -786,7 +785,7 @@ while running:
 
         # Spawn rate changes to 0.5 after level 30
         if player.level >= 30:
-            spawn_interval = 0.75
+            spawn_interval = 0.35
         else:
             spawn_interval = max(.6, base_spawn_interval - 0.3 * (player.level - 1))
         spawn_timer += dt
@@ -860,8 +859,10 @@ while running:
                             boss_name = None
                             if player.kill_count == 50:
                                 boss_name = random.choice(["bigfoot", "minotaur"])
+                            elif player.kill_count == 100:
+                                boss_name = "monster"
                             elif player.kill_count == 150:
-                                boss_name = random.choice(["cyclops", "giant", "monster"])
+                                boss_name = random.choice(["cyclops", "giant"])
                             elif player.kill_count == 250:
                                 boss_name = random.choice(["cerberus", "chimera"])
                             elif player.kill_count == 350:
@@ -930,8 +931,10 @@ while running:
                             boss_name = None
                             if player.kill_count == 50:
                                 boss_name = random.choice(["bigfoot", "minotaur"])
+                            elif player.kill_count == 100:
+                                boss_name = "monster"
                             elif player.kill_count == 150:
-                                boss_name = random.choice(["cyclops", "giant", "monster"])
+                                boss_name = random.choice(["cyclops", "giant"])
                             elif player.kill_count == 250:
                                 boss_name = random.choice(["cerberus", "chimera"])
                             elif player.kill_count == 350:

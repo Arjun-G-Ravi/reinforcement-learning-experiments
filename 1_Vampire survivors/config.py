@@ -45,24 +45,26 @@ BOSS_STATS = {
             "sprite_size": (100, 100)
         }
     },
+    100: {
+        "monster": {
+            "speed": 80,
+            "health": 700,  # + 8 * player_level
+            "damage_rate": 100,
+            "sprite_size": (130, 130)
+        }
+    },
     150: {
         "cyclops": {
-            "speed": 60,
-            "health": 1000,  # + 8 * player_level
-            "damage_rate": 200,
-            "sprite_size": (160, 160)
-        },
-        "giant": {
-            "speed": 20,
+            "speed": 40,
             "health": 1000,  # + 8 * player_level
             "damage_rate": 200,
             "sprite_size": (250, 250)
         },
-        "monster": {
-            "speed": 80,
+        "giant": {
+            "speed": 40,
             "health": 1000,  # + 8 * player_level
             "damage_rate": 200,
-            "sprite_size": (130, 130)
+            "sprite_size": (300, 300)
         }
     },
     250: {
@@ -82,7 +84,7 @@ BOSS_STATS = {
     350: {
         "medusa": {
             "speed": 150,
-            "health": 2000,  # + 12 * player_level
+            "health": 3000,  # + 12 * player_level
             "damage_rate": 100,
             "sprite_size": (150, 150)
         }
@@ -91,14 +93,14 @@ BOSS_STATS = {
         "echidna": {
             "speed": 50,
             "health": 3500,  # + 12 * player_level
-            "damage_rate": 110,
+            "damage_rate": 100,
             "sprite_size": (250, 250)
         }
     },
     500: {
         "devil": {
             "speed": 150,
-            "health": 4000,  # + 15 * player_level
+            "health": 5000,  # + 15 * player_level
             "damage_rate": 200,
             "sprite_size": (200, 200)
         }
