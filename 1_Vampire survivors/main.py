@@ -807,15 +807,15 @@ while running:
                             
                             # Boss spawning logic
                             boss_name = None
-                            if player.kill_count == 100:
+                            if player.kill_count == 50:
                                 boss_name = random.choice(["bigfoot", "minotaur"])
-                            elif player.kill_count == 200:
+                            elif player.kill_count == 150:
                                 boss_name = random.choice(["cyclops", "giant", "monster"])
-                            elif player.kill_count == 300:
+                            elif player.kill_count == 250:
                                 boss_name = random.choice(["cerberus", "chimera"])
-                            elif player.kill_count == 400:
+                            elif player.kill_count == 350:
                                 boss_name = "medusa"
-                            elif player.kill_count == 401:
+                            elif player.kill_count == 351:
                                 boss_name = "echidna"
                             elif player.kill_count == 500:
                                 boss_name = "devil"
