@@ -23,7 +23,7 @@ ENEMY_STATS = {
     },
     "mini-devil": {
         "speed": (50, 250),  # Random range
-        "health": (50, 300),  # Random range
+        "health": (50, 200),  # Random range
         "damage_rate": (10, 50),  # Random range
         "sprite_size": (50, 50)
     }
@@ -65,7 +65,7 @@ BOSS_STATS = {
             "sprite_size": (130, 130)
         }
     },
-    150: {
+    250: {
         "cerberus": {
             "speed": 180,
             "health": 1700,  # + 10 * player_level

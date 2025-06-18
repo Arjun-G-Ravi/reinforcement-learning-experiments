@@ -41,15 +41,15 @@ vampire_sprite = load_sprite("icons8-vampire-64.png", ENEMY_STATS["vampire"]["sp
 golem_sprite = load_sprite("icons8-golem-64.png", ENEMY_STATS["golem"]["sprite_size"])
 
 # Boss sprites
-bigfoot_sprite = load_sprite("icons8-bigfoot-64.png", BOSS_STATS[100]["bigfoot"]["sprite_size"])
-minotaur_sprite = load_sprite("icons8-minotaur-64.png", BOSS_STATS[100]["minotaur"]["sprite_size"])
-cyclops_sprite = load_sprite("icons8-cyclops-64.png", BOSS_STATS[200]["cyclops"]["sprite_size"])
-giant_sprite = load_sprite("icons8-giant-64.png", BOSS_STATS[200]["giant"]["sprite_size"])
-monster_sprite = load_sprite("icons8-monster-64.png", BOSS_STATS[200]["monster"]["sprite_size"])
-cerberus_sprite = load_sprite("icons8-cerberus-64.png", BOSS_STATS[300]["cerberus"]["sprite_size"])
-chimera_sprite = load_sprite("icons8-chimera-64.png", BOSS_STATS[300]["chimera"]["sprite_size"])
-medusa_sprite = load_sprite("icons8-medusa-64.png", BOSS_STATS[400]["medusa"]["sprite_size"])
-echidna_sprite = load_sprite("icons8-echidna-64.png", BOSS_STATS[401]["echidna"]["sprite_size"])
+bigfoot_sprite = load_sprite("icons8-bigfoot-64.png", BOSS_STATS[50]["bigfoot"]["sprite_size"])
+minotaur_sprite = load_sprite("icons8-minotaur-64.png", BOSS_STATS[50]["minotaur"]["sprite_size"])
+cyclops_sprite = load_sprite("icons8-cyclops-64.png", BOSS_STATS[150]["cyclops"]["sprite_size"])
+giant_sprite = load_sprite("icons8-giant-64.png", BOSS_STATS[150]["giant"]["sprite_size"])
+monster_sprite = load_sprite("icons8-monster-64.png", BOSS_STATS[150]["monster"]["sprite_size"])
+cerberus_sprite = load_sprite("icons8-cerberus-64.png", BOSS_STATS[250]["cerberus"]["sprite_size"])
+chimera_sprite = load_sprite("icons8-chimera-64.png", BOSS_STATS[250]["chimera"]["sprite_size"])
+medusa_sprite = load_sprite("icons8-medusa-64.png", BOSS_STATS[350]["medusa"]["sprite_size"])
+echidna_sprite = load_sprite("icons8-echidna-64.png", BOSS_STATS[351]["echidna"]["sprite_size"])
 devil_sprite = load_sprite("icons8-devil-64.png", BOSS_STATS[500]["devil"]["sprite_size"])
 
 # Enemy sprites
@@ -193,6 +193,9 @@ class Enemy(pygame.sprite.Sprite):
                     self.health = boss_stats["health"] + 12 * player_level
                 elif boss_name == "devil":
                     self.health = boss_stats["health"] + 15 * player_level
+                
+                # Store max health for health bar display
+                self.max_health = self.health
         
         self.rect = self.image.get_rect(center=pos)
         # Create smaller collision rectangles for more precise collision detection
@@ -225,7 +228,7 @@ class Enemy(pygame.sprite.Sprite):
         # Medusa and Echidna snake shooting variables
         if enemy_type == "boss" and boss_name in ["medusa", "echidna"]:
             self.snake_timer = 0.0
-            self.snake_cooldown = random.uniform(0.5, 2.0)  # Random cooldown between 2-4 seconds
+            self.snake_cooldown = random.uniform(0.1, 1.2)  # Random cooldown between 2-4 seconds
 
     def update(self, dt):
         # Special AI for devil boss - cycles between chase and flee behavior
@@ -672,6 +675,54 @@ def create_boss_drops(center_pos):
     
     return items_created
 
+def draw_boss_health_bar(screen, boss):
+    """Draw health bar above boss"""
+    if boss.enemy_type == "boss":
+        # Find the original max health for this boss type
+        max_health = None
+        for milestone_bosses in BOSS_STATS.values():
+            if boss.boss_name in milestone_bosses:
+                base_health = milestone_bosses[boss.boss_name]["health"]
+                # Calculate max health with level bonus
+                if boss.boss_name in ["bigfoot", "minotaur"]:
+                    max_health = base_health + 5 * player.level
+                elif boss.boss_name in ["cyclops", "giant", "monster"]:
+                    max_health = base_health + 8 * player.level
+                elif boss.boss_name in ["cerberus", "chimera"]:
+                    max_health = base_health + 10 * player.level
+                elif boss.boss_name in ["medusa", "echidna"]:
+                    max_health = base_health + 12 * player.level
+                elif boss.boss_name == "devil":
+                    max_health = base_health + 15 * player.level
+                break
+        
+        if max_health:
+            # Health bar dimensions
+            bar_width = 100
+            bar_height = 8
+            
+            # Position above the boss
+            bar_x = boss.rect.centerx - bar_width // 2
+            bar_y = boss.rect.top - 15
+            
+            # Health ratio
+            health_ratio = max(0, boss.health / max_health)
+            
+            # Draw background (red)
+            pygame.draw.rect(screen, RED, (bar_x, bar_y, bar_width, bar_height))
+            
+            # Draw health (green)
+            pygame.draw.rect(screen, GREEN, (bar_x, bar_y, bar_width * health_ratio, bar_height))
+            
+            # Draw border
+            pygame.draw.rect(screen, WHITE, (bar_x, bar_y, bar_width, bar_height), 1)
+            
+            # Draw boss name
+            boss_name_text = font.render(boss.boss_name.capitalize(), True, WHITE)
+            name_x = boss.rect.centerx - boss_name_text.get_width() // 2
+            name_y = bar_y - 20
+            screen.blit(boss_name_text, (name_x, name_y))
+
 player = Player()
 all_sprites.add(player)
 
@@ -737,7 +788,7 @@ while running:
         if player.level >= 30:
             spawn_interval = 0.75
         else:
-            spawn_interval = max(1, base_spawn_interval - 0.3 * (player.level - 1))
+            spawn_interval = max(.6, base_spawn_interval - 0.3 * (player.level - 1))
         spawn_timer += dt
         if spawn_timer >= spawn_interval:
             spawn_timer = 0
@@ -877,15 +928,15 @@ while running:
                             
                             # Boss spawning logic
                             boss_name = None
-                            if player.kill_count == 100:
+                            if player.kill_count == 50:
                                 boss_name = random.choice(["bigfoot", "minotaur"])
-                            elif player.kill_count == 200:
+                            elif player.kill_count == 150:
                                 boss_name = random.choice(["cyclops", "giant", "monster"])
-                            elif player.kill_count == 300:
+                            elif player.kill_count == 250:
                                 boss_name = random.choice(["cerberus", "chimera"])
-                            elif player.kill_count == 400:
+                            elif player.kill_count == 350:
                                 boss_name = "medusa"
-                            elif player.kill_count == 401:
+                            elif player.kill_count == 351:
                                 boss_name = "echidna"
                             elif player.kill_count == 500:
                                 boss_name = "devil"
@@ -952,6 +1003,11 @@ while running:
     if game_state in ["playing", "upgrading"]:
         screen.fill(BLACK)
         all_sprites.draw(screen)
+        
+        # Draw boss health bars
+        for enemy in enemies:
+            if enemy.enemy_type == "boss":
+                draw_boss_health_bar(screen, enemy)
         
         # Optional: Draw collision rectangles for debugging
         if SHOW_COLLISION_RECTS:
@@ -1084,6 +1140,11 @@ while running:
                 color = WHITE
             stat_text = font.render(weapon.stats(), True, color)
             screen.blit(stat_text, (screen_width - 350, 15 + i * 35))
+
+    # Draw boss health bars
+    for enemy in enemies:
+        if enemy.enemy_type == "boss":
+            draw_boss_health_bar(screen, enemy)
 
     pygame.display.flip()
 
