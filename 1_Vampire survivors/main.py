@@ -43,7 +43,7 @@ golem_sprite = load_sprite("icons8-golem-64.png", ENEMY_STATS["golem"]["sprite_s
 # Boss sprites
 bigfoot_sprite = load_sprite("icons8-bigfoot-64.png", BOSS_STATS[50]["bigfoot"]["sprite_size"])
 minotaur_sprite = load_sprite("icons8-minotaur-64.png", BOSS_STATS[50]["minotaur"]["sprite_size"])
-monster_sprite = load_sprite("icons8-monster-64.png", BOSS_STATS[100]["monster"]["sprite_size"])
+monster_sprite = load_sprite("icons8-monster-64.png", BOSS_STATS[50]["monster"]["sprite_size"])
 cyclops_sprite = load_sprite("icons8-cyclops-64.png", BOSS_STATS[150]["cyclops"]["sprite_size"])
 giant_sprite = load_sprite("icons8-giant-64.png", BOSS_STATS[150]["giant"]["sprite_size"])
 cerberus_sprite = load_sprite("icons8-cerberus-64.png", BOSS_STATS[250]["cerberus"]["sprite_size"])
@@ -226,9 +226,9 @@ class Enemy(pygame.sprite.Sprite):
             self.flee_duration = random.uniform(4.0, 6.0)   # Flee for 4-6 seconds
         
         # Medusa and Echidna snake shooting variables
-        if enemy_type == "boss" and boss_name in ["echidna"]:
+        if enemy_type == "boss" and boss_name in ["medusa", "echidna"]:
             self.snake_timer = 0.0
-            self.snake_cooldown = random.uniform(0.1, 0.5)  # Random cooldown between 2-4 seconds
+            self.snake_cooldown = random.uniform(0.1, 0.5)  # Random cooldown between 0.1-0.5 seconds
 
     def update(self, dt):
         # Special AI for devil boss - cycles between chase and flee behavior
@@ -683,9 +683,9 @@ def draw_boss_health_bar(screen, boss):
             if boss.boss_name in milestone_bosses:
                 base_health = milestone_bosses[boss.boss_name]["health"]
                 # Calculate max health with level bonus
-                if boss.boss_name in ["bigfoot", "minotaur"]:
+                if boss.boss_name in ["bigfoot", "minotaur", "monster"]:
                     max_health = base_health + 5 * player.level
-                elif boss.boss_name in ["cyclops", "giant", "monster"]:
+                elif boss.boss_name in ["cyclops", "giant"]:
                     max_health = base_health + 8 * player.level
                 elif boss.boss_name in ["cerberus", "chimera"]:
                     max_health = base_health + 10 * player.level
@@ -858,9 +858,7 @@ while running:
                             # Boss spawning logic
                             boss_name = None
                             if player.kill_count == 50:
-                                boss_name = random.choice(["bigfoot", "minotaur"])
-                            elif player.kill_count == 100:
-                                boss_name = "monster"
+                                boss_name = random.choice(["bigfoot", "minotaur", "monster"])
                             elif player.kill_count == 150:
                                 boss_name = random.choice(["cyclops", "giant"])
                             elif player.kill_count == 250:
@@ -930,9 +928,7 @@ while running:
                             # Boss spawning logic
                             boss_name = None
                             if player.kill_count == 50:
-                                boss_name = random.choice(["bigfoot", "minotaur"])
-                            elif player.kill_count == 100:
-                                boss_name = "monster"
+                                boss_name = random.choice(["bigfoot", "minotaur", "monster"])
                             elif player.kill_count == 150:
                                 boss_name = random.choice(["cyclops", "giant"])
                             elif player.kill_count == 250:

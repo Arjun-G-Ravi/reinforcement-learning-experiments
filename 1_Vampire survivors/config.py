@@ -43,9 +43,7 @@ BOSS_STATS = {
             "health": 600,  # + 5 * player_level
             "damage_rate": 100,
             "sprite_size": (100, 100)
-        }
-    },
-    100: {
+        },
         "monster": {
             "speed": 80,
             "health": 700,  # + 8 * player_level
@@ -146,7 +144,7 @@ upgrade_gun = {
     12: {"damage": 35, "cooldown": 0.5},
     13: {"damage": 37, "cooldown": 0.4},
     14: {"damage": 40, "cooldown": 0.4},
-    15: {"damage": 20, "cooldown": 0.1},
+    15: {"damage": 15, "cooldown": 0.1},
 }
 
 upgrade_blob = {
