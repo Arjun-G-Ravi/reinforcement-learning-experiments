@@ -125,16 +125,16 @@ ITEM_STATS = {
 DROP_PROBABILITIES = {
     "gem": 0.6,
     "mana": 0.05,
-    "emerald": 0.01
+    "emerald": 0.02
 }
 
 # Spawn rate configuration
 SPAWN_CONFIG = {
-    "base_spawn_interval": 3,
+    "base_spawn_interval": 1,
     "min_spawn_interval": 0.2,  # Minimum spawn interval after level 30
     "level_30_interval": 0.3,   # Spawn interval at level 30+
     "devil_battle_interval": 0.5,  # Slower spawning during devil fight
-    "spawn_reduction_per_level": 0.1  # How much to reduce spawn time per level
+    "spawn_reduction_per_level": 0.05  # How much to reduce spawn time per level
 }
 
 # Enemy type probabilities based on player level and kill count
