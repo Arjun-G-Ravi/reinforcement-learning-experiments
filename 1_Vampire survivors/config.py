@@ -134,7 +134,9 @@ SPAWN_CONFIG = {
     "min_spawn_interval": 0.2,  # Minimum spawn interval after level 30
     "level_30_interval": 0.3,   # Spawn interval at level 30+
     "devil_battle_interval": 0.5,  # Slower spawning during devil fight
-    "spawn_reduction_per_level": 0.05  # How much to reduce spawn time per level
+    "spawn_reduction_per_level": 0.05,  # How much to reduce spawn time per level
+    "max_enemies": 50,  # Maximum number of enemies on screen
+    "overcrowded_spawn_interval": 1.0  # Spawn interval when enemy limit is reached
 }
 
 # Enemy type probabilities based on player level and kill count
@@ -171,13 +173,18 @@ BOSS_SPAWN_CONFIG = {
     700: ["devil"]                           # Final boss
 }
 
+# Mini devil spawn configuration - spawn mini devils when devil spawns
+MINI_DEVIL_SPAWN_CONFIG = {
+    700: 3  # Spawn 3 mini devils when devil spawns at kill 700
+}
+
 # Weapon upgrades
 upgrade_gun = {
-    1: {"damage": 5, "cooldown": 2},
-    2: {"damage": 5, "cooldown": 1},
-    3: {"damage": 7, "cooldown": 1},
-    4: {"damage": 9, "cooldown": 1},
-    5: {"damage": 12, "cooldown": 0.9},
+    1: {"damage": 7, "cooldown": 2},
+    2: {"damage": 10, "cooldown": 1},
+    3: {"damage": 12, "cooldown": 1},
+    4: {"damage": 14, "cooldown": 1},
+    5: {"damage": 15, "cooldown": 0.9},
     6: {"damage": 15, "cooldown": 0.8},
     7: {"damage": 20, "cooldown": 0.7},
     8: {"damage": 25, "cooldown": 0.6},
@@ -187,7 +194,7 @@ upgrade_gun = {
     12: {"damage": 35, "cooldown": 0.5},
     13: {"damage": 37, "cooldown": 0.4},
     14: {"damage": 40, "cooldown": 0.4},
-    15: {"damage": 15, "cooldown": 0.1},
+    15: {"damage": 20, "cooldown": 0.1},
 }
 
 upgrade_blob = {

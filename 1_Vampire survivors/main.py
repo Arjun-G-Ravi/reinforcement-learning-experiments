@@ -2,7 +2,7 @@ import pygame
 import random
 import math
 from pygame.math import Vector2
-from config import ENEMY_STATS, BOSS_STATS, ITEM_STATS, DROP_PROBABILITIES, upgrade_gun, upgrade_blob, upgrade_heavy, SPAWN_CONFIG, ENEMY_SPAWN_WEIGHTS, BOSS_SPAWN_CONFIG
+from config import ENEMY_STATS, BOSS_STATS, ITEM_STATS, DROP_PROBABILITIES, upgrade_gun, upgrade_blob, upgrade_heavy, SPAWN_CONFIG, ENEMY_SPAWN_WEIGHTS, BOSS_SPAWN_CONFIG, MINI_DEVIL_SPAWN_CONFIG
 
 # Initialize Pygame
 pygame.init()
@@ -335,6 +335,8 @@ class Enemy(pygame.sprite.Sprite):
         elif self.enemy_type == "boss" and self.boss_name in ["medusa", "echidna"]:
             # Snake shooting bosses
             diff = player.pos - self.pos
+            direction = Vector2(0, 0)  # Initialize direction to prevent UnboundLocalError
+            
             if diff.length_squared() == 0:  # Check if positions are identical
                 direction = Vector2(0, 0)
             else:
@@ -350,6 +352,7 @@ class Enemy(pygame.sprite.Sprite):
                             self.in_position = True
                             # Choose a new corner after some time in current position
                             self.position_timer = random.uniform(8.0, 15.0)  # Stay in corner for 8-15 seconds
+                            direction = Vector2(0, 0)
                         else:
                             direction = corner_diff.normalize()
                     else:
@@ -359,6 +362,7 @@ class Enemy(pygame.sprite.Sprite):
                             # Time to move to a new corner
                             self.target_corner = self._choose_corner()
                             self.in_position = False
+                            direction = Vector2(0, 0)
                         else:
                             # Stay in corner but make small adjustments to avoid getting stuck
                             direction = Vector2(0, 0)
@@ -911,8 +915,14 @@ while running:
         # Check if devil boss is active
         devil_active = any(enemy.enemy_type == "boss" and enemy.boss_name == "devil" for enemy in enemies)
         
-        # Spawn rate changes based on level and devil battle using config
-        if devil_active:
+        # Count current enemies (excluding bosses)
+        current_enemy_count = len([enemy for enemy in enemies if enemy.enemy_type != "boss"])
+        
+        # Spawn rate changes based on level, devil battle, and enemy count using config
+        if current_enemy_count >= SPAWN_CONFIG["max_enemies"]:
+            # Too many enemies on screen - use overcrowded spawn interval
+            spawn_interval = SPAWN_CONFIG["overcrowded_spawn_interval"]
+        elif devil_active:
             spawn_interval = SPAWN_CONFIG["devil_battle_interval"]
         elif player.level >= 30:
             spawn_interval = SPAWN_CONFIG["level_30_interval"]
@@ -921,28 +931,33 @@ while running:
                 SPAWN_CONFIG["min_spawn_interval"], 
                 base_spawn_interval - SPAWN_CONFIG["spawn_reduction_per_level"] * (player.level - 1)
             )
+        
         spawn_timer += dt
         if spawn_timer >= spawn_interval:
             spawn_timer = 0
-            side = random.choice(['top', 'bottom', 'left', 'right'])
-            if side == 'top':
-                pos = (random.randint(0, screen_width), -20)
-            elif side == 'bottom':
-                pos = (random.randint(0, screen_width), screen_height + 20)
-            elif side == 'left':
-                pos = (-20, random.randint(0, screen_height))
-            else:
-                pos = (screen_width + 20, random.randint(0, screen_height))
             
-            # Determine enemy type based on player level and kill count using config
-            weights = get_enemy_spawn_weights(player.level, player.kill_count)
-            enemy_types = list(weights.keys())
-            enemy_weights = list(weights.values())
-            enemy_type = random.choices(enemy_types, weights=enemy_weights, k=1)[0]
-            
-            enemy = Enemy(pos, enemy_type, player.level)
-            all_sprites.add(enemy)
-            enemies.add(enemy)
+            # Only spawn regular enemies if we haven't reached the limit
+            # Bosses can always spawn regardless of the limit
+            if current_enemy_count < SPAWN_CONFIG["max_enemies"]:
+                side = random.choice(['top', 'bottom', 'left', 'right'])
+                if side == 'top':
+                    pos = (random.randint(0, screen_width), -20)
+                elif side == 'bottom':
+                    pos = (random.randint(0, screen_width), screen_height + 20)
+                elif side == 'left':
+                    pos = (-20, random.randint(0, screen_height))
+                else:
+                    pos = (screen_width + 20, random.randint(0, screen_height))
+                
+                # Determine enemy type based on player level and kill count using config
+                weights = get_enemy_spawn_weights(player.level, player.kill_count)
+                enemy_types = list(weights.keys())
+                enemy_weights = list(weights.values())
+                enemy_type = random.choices(enemy_types, weights=enemy_weights, k=1)[0]
+                
+                enemy = Enemy(pos, enemy_type, player.level)
+                all_sprites.add(enemy)
+                enemies.add(enemy)
 
         for projectile in projectiles:
             if isinstance(projectile, Blob):
@@ -990,6 +1005,22 @@ while running:
                                 boss = Enemy(pos, "boss", player.level, boss_name)
                                 all_sprites.add(boss)
                                 enemies.add(boss)
+                                
+                                # Spawn mini devils when devil boss spawns
+                                if boss_name == "devil" and player.kill_count in MINI_DEVIL_SPAWN_CONFIG:
+                                    num_mini_devils = MINI_DEVIL_SPAWN_CONFIG[player.kill_count]
+                                    for _ in range(num_mini_devils):
+                                        # Spawn mini devils around the devil boss
+                                        angle = random.uniform(0, 2 * math.pi)
+                                        distance = random.randint(100, 200)
+                                        mini_devil_x = pos[0] + math.cos(angle) * distance
+                                        mini_devil_y = pos[1] + math.sin(angle) * distance
+                                        # Keep mini devils within screen bounds with some margin
+                                        mini_devil_x = max(50, min(screen_width - 50, mini_devil_x))
+                                        mini_devil_y = max(50, min(screen_height - 50, mini_devil_y))
+                                        mini_devil = Enemy((mini_devil_x, mini_devil_y), "mini-devil", player.level)
+                                        all_sprites.add(mini_devil)
+                                        enemies.add(mini_devil)
                             
                             if enemy.enemy_type == "boss" and enemy.boss_name == "devil":
                                 game_state = "end"
@@ -1048,6 +1079,22 @@ while running:
                                 boss = Enemy(pos, "boss", player.level, boss_name)
                                 all_sprites.add(boss)
                                 enemies.add(boss)
+                                
+                                # Spawn mini devils when devil boss spawns
+                                if boss_name == "devil" and player.kill_count in MINI_DEVIL_SPAWN_CONFIG:
+                                    num_mini_devils = MINI_DEVIL_SPAWN_CONFIG[player.kill_count]
+                                    for _ in range(num_mini_devils):
+                                        # Spawn mini devils around the devil boss
+                                        angle = random.uniform(0, 2 * math.pi)
+                                        distance = random.randint(100, 200)
+                                        mini_devil_x = pos[0] + math.cos(angle) * distance
+                                        mini_devil_y = pos[1] + math.sin(angle) * distance
+                                        # Keep mini devils within screen bounds with some margin
+                                        mini_devil_x = max(50, min(screen_width - 50, mini_devil_x))
+                                        mini_devil_y = max(50, min(screen_height - 50, mini_devil_y))
+                                        mini_devil = Enemy((mini_devil_x, mini_devil_y), "mini-devil", player.level)
+                                        all_sprites.add(mini_devil)
+                                        enemies.add(mini_devil)
                             
                             if enemy.enemy_type == "boss" and enemy.boss_name == "devil":
                                 game_state = "end"
