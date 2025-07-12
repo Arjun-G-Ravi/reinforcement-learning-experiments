@@ -125,7 +125,40 @@ ITEM_STATS = {
 DROP_PROBABILITIES = {
     "gem": 0.6,
     "mana": 0.05,
-    "emerald": 0.02
+    "emerald": 0.01
+}
+
+# Spawn rate configuration
+SPAWN_CONFIG = {
+    "base_spawn_interval": 3,
+    "min_spawn_interval": 0.2,  # Minimum spawn interval after level 30
+    "level_30_interval": 0.3,   # Spawn interval at level 30+
+    "devil_battle_interval": 0.5,  # Slower spawning during devil fight
+    "spawn_reduction_per_level": 0.1  # How much to reduce spawn time per level
+}
+
+# Enemy type probabilities based on player level and kill count
+ENEMY_SPAWN_WEIGHTS = {
+    # Before kill 500 (no mini-devils)
+    "before_500": {
+        "level_0_5": {"zombie": 95, "vampire": 5, "golem": 0},
+        "level_5_10": {"zombie": 70, "vampire": 20, "golem": 10},
+        "level_10_15": {"zombie": 50, "vampire": 40, "golem": 10},
+        "level_15_20": {"zombie": 20, "vampire": 60, "golem": 20},
+        "level_20_25": {"zombie": 10, "vampire": 10, "golem": 80},
+        "level_25_30": {"zombie": 0, "vampire": 70, "golem": 30},
+        "level_30_plus": {"zombie": 0, "vampire": 50, "golem": 50}
+    },
+    # After kill 500 (include mini-devils)
+    "after_500": {
+        "level_0_5": {"zombie": 85, "vampire": 15, "golem": 0, "mini-devil": 10},
+        "level_5_10": {"zombie": 60, "vampire": 20, "golem": 10, "mini-devil": 10},
+        "level_10_15": {"zombie": 40, "vampire": 30, "golem": 15, "mini-devil": 15},
+        "level_15_20": {"zombie": 15, "vampire": 45, "golem": 20, "mini-devil": 20},
+        "level_20_25": {"zombie": 5, "vampire": 5, "golem": 40, "mini-devil": 50},
+        "level_25_30": {"zombie": 0, "vampire": 25, "golem": 25, "mini-devil": 50},
+        "level_30_plus": {"zombie": 0, "vampire": 20, "golem": 10, "mini-devil": 70}
+    }
 }
 
 # Weapon upgrades
@@ -154,15 +187,15 @@ upgrade_blob = {
     4: {"damage": 5, "speed": 1.7, "size": 36, "radius": 120, "count": 2},
     5: {"damage": 10, "speed": 1.5, "size": 32, "radius": 120, "count": 3},
     6: {"damage": 10, "speed": 1.5, "size": 36, "radius": 150, "count": 3},
-    7: {"damage": 10, "speed": 1.3, "size": 40, "radius": 150, "count": 4},
-    8: {"damage": 10, "speed": 1.3, "size": 44, "radius": 150, "count": 4},
-    9: {"damage": 10, "speed": 1.1, "size": 48, "radius": 180, "count": 5},
-    10: {"damage": 10, "speed": 1.1, "size": 50, "radius": 180, "count": 5},
-    11: {"damage": 10, "speed": 1, "size": 50, "radius": 180, "count": 6},
-    12: {"damage": 12, "speed": 1, "size": 52, "radius": 200, "count": 6},
-    13: {"damage": 12, "speed": 1.1, "size": 54, "radius": 200, "count": 7},
+    7: {"damage": 12, "speed": 1.3, "size": 40, "radius": 150, "count": 4},
+    8: {"damage": 12, "speed": 1.3, "size": 44, "radius": 150, "count": 4},
+    9: {"damage": 12, "speed": 1.1, "size": 48, "radius": 180, "count": 5},
+    10: {"damage": 12, "speed": 1.1, "size": 50, "radius": 180, "count": 5},
+    11: {"damage": 12, "speed": 1, "size": 50, "radius": 180, "count": 6},
+    12: {"damage": 15, "speed": 1, "size": 52, "radius": 200, "count": 6},
+    13: {"damage": 15, "speed": 1.1, "size": 54, "radius": 200, "count": 7},
     14: {"damage": 15, "speed": 1.2, "size": 60, "radius": 200, "count": 7},
-    15: {"damage": 15, "speed": 2, "size": 60, "radius": 250, "count": 8},
+    15: {"damage": 20, "speed": 2, "size": 60, "radius": 250, "count": 8},
 }
 
 upgrade_heavy = {

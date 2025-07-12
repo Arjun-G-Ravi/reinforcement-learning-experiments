@@ -2,7 +2,7 @@ import pygame
 import random
 import math
 from pygame.math import Vector2
-from config import ENEMY_STATS, BOSS_STATS, ITEM_STATS, DROP_PROBABILITIES, upgrade_gun, upgrade_blob, upgrade_heavy
+from config import ENEMY_STATS, BOSS_STATS, ITEM_STATS, DROP_PROBABILITIES, upgrade_gun, upgrade_blob, upgrade_heavy, SPAWN_CONFIG, ENEMY_SPAWN_WEIGHTS
 
 # Initialize Pygame
 pygame.init()
@@ -64,6 +64,7 @@ emerald_sprite = load_sprite("icons8-emerald-64.png", ITEM_STATS["emerald"]["spr
 red_orb_sprite = load_sprite("red-orb.png", (15, 15))
 yellow_orb_sprite = load_sprite("yellow-orb.png", (20, 20))
 snake_sprite = load_sprite("icons8-snake-64.png", (30, 30))
+tree_sprite = load_sprite("tree.png", (100, 100))
 
 font = pygame.font.SysFont(None, 28)
 large_font = pygame.font.SysFont(None, 60)
@@ -229,6 +230,27 @@ class Enemy(pygame.sprite.Sprite):
         if enemy_type == "boss" and boss_name in ["medusa", "echidna"]:
             self.snake_timer = 0.0
             self.snake_cooldown = random.uniform(0.1, 0.5)  # Random cooldown between 0.1-0.5 seconds
+            
+            # Echidna-specific corner positioning variables
+            if boss_name == "echidna":
+                self.target_corner = self._choose_corner()
+                self.in_position = False
+                self.position_tolerance = 80  # How close to corner before considering "in position"
+        
+        # Cyclops and Giant tree shooting variables
+        if enemy_type == "boss" and boss_name in ["cyclops", "giant"]:
+            self.tree_timer = 0.0
+            self.tree_cooldown = random.uniform(3.0, 6.0)  # Random cooldown between 3-6 seconds
+
+    def _choose_corner(self):
+        """Choose a random corner position for Echidna to move to"""
+        corners = [
+            (100, 100),  # Top-left
+            (screen_width - 100, 100),  # Top-right
+            (100, screen_height - 100),  # Bottom-left
+            (screen_width - 100, screen_height - 100)  # Bottom-right
+        ]
+        return random.choice(corners)
 
     def update(self, dt):
         # Special AI for devil boss - cycles between chase and flee behavior
@@ -311,12 +333,41 @@ class Enemy(pygame.sprite.Sprite):
                 self.fireball_timer = 0.0
                 self.fireball_cooldown = random.uniform(2.0, 4.0)
         elif self.enemy_type == "boss" and self.boss_name in ["medusa", "echidna"]:
-            # Snake shooting bosses - move toward player
+            # Snake shooting bosses
             diff = player.pos - self.pos
             if diff.length_squared() == 0:  # Check if positions are identical
                 direction = Vector2(0, 0)
             else:
-                direction = diff.normalize()
+                if self.boss_name == "medusa":
+                    # Medusa chases the player
+                    direction = diff.normalize()
+                else:  # echidna
+                    # Echidna goes to corner and attacks from there
+                    if not self.in_position:
+                        # Move towards the target corner
+                        corner_diff = Vector2(self.target_corner) - self.pos
+                        if corner_diff.length() < self.position_tolerance:
+                            self.in_position = True
+                            # Choose a new corner after some time in current position
+                            self.position_timer = random.uniform(8.0, 15.0)  # Stay in corner for 8-15 seconds
+                        else:
+                            direction = corner_diff.normalize()
+                    else:
+                        # In position, stay in corner and attack
+                        self.position_timer -= dt
+                        if self.position_timer <= 0:
+                            # Time to move to a new corner
+                            self.target_corner = self._choose_corner()
+                            self.in_position = False
+                        else:
+                            # Stay in corner but make small adjustments to avoid getting stuck
+                            direction = Vector2(0, 0)
+                            # Small random movement to avoid being completely static
+                            if random.random() < 0.1:  # 10% chance each frame
+                                direction = Vector2(random.uniform(-1, 1), random.uniform(-1, 1))
+                                if direction.length() > 0:
+                                    direction = direction.normalize() * 0.2  # Very slow movement
+            
             self.pos += direction * self.speed * dt
             
             # Snake shooting logic
@@ -328,7 +379,30 @@ class Enemy(pygame.sprite.Sprite):
                 projectiles.add(snake)
                 # Reset timer with new random cooldown
                 self.snake_timer = 0.0
-                self.snake_cooldown = random.uniform(.5, 2.0)
+                # Echidna shoots more frequently when in position
+                if self.boss_name == "echidna" and self.in_position:
+                    self.snake_cooldown = random.uniform(0.1, 0.3)  # Faster shooting when in corner
+                else:
+                    self.snake_cooldown = random.uniform(.5, 2.0)
+        elif self.enemy_type == "boss" and self.boss_name in ["cyclops", "giant"]:
+            # Tree throwing bosses - move toward player
+            diff = player.pos - self.pos
+            if diff.length_squared() == 0:  # Check if positions are identical
+                direction = Vector2(0, 0)
+            else:
+                direction = diff.normalize()
+            self.pos += direction * self.speed * dt
+            
+            # Tree throwing logic
+            self.tree_timer += dt
+            if self.tree_timer >= self.tree_cooldown:
+                # Throw tree at player
+                tree = Tree(self.pos, player.pos)
+                all_sprites.add(tree)
+                projectiles.add(tree)
+                # Reset timer with new random cooldown
+                self.tree_timer = 0.0
+                self.tree_cooldown = random.uniform(3.0, 6.0)
         else:
             # Normal AI for all other enemies - move toward player
             diff = player.pos - self.pos
@@ -420,6 +494,27 @@ class Snake(pygame.sprite.Sprite):
         self.velocity = direction * 200
         self.damage = damage
         self.lifetime = 5.0  # Lives longer since it moves slower
+
+    def update(self, dt):
+        self.pos += self.velocity * dt
+        self.rect.center = self.pos
+        self.lifetime -= dt
+        if self.lifetime <= 0 or not screen_rect.contains(self.rect):
+            self.kill()
+
+class Tree(pygame.sprite.Sprite):
+    def __init__(self, pos, target_pos, damage=30):
+        super().__init__()
+        self.image = tree_sprite.copy()
+        self.rect = self.image.get_rect(center=pos)
+        self.pos = Vector2(pos)
+        
+        # Calculate direction toward player
+        direction = (target_pos - self.pos).normalize()
+        # Tree speed is 250 (slower than fireball but faster than snake)
+        self.velocity = direction * 250
+        self.damage = damage
+        self.lifetime = 4.0  # Lives for 4 seconds
 
     def update(self, dt):
         self.pos += self.velocity * dt
@@ -640,6 +735,29 @@ def find_nearest_enemy(position):
             nearest = enemy
     return nearest
 
+def get_enemy_spawn_weights(player_level, kill_count):
+    """Get enemy spawn weights based on player level and kill count using config"""
+    # Determine if mini-devils should be included
+    spawn_data = ENEMY_SPAWN_WEIGHTS["after_500"] if kill_count >= 500 else ENEMY_SPAWN_WEIGHTS["before_500"]
+    
+    # Determine level category
+    if player_level < 5:
+        weights = spawn_data["level_0_5"]
+    elif player_level < 10:
+        weights = spawn_data["level_5_10"]
+    elif player_level < 15:
+        weights = spawn_data["level_10_15"]
+    elif player_level < 20:
+        weights = spawn_data["level_15_20"]
+    elif player_level < 25:
+        weights = spawn_data["level_20_25"]
+    elif player_level < 30:
+        weights = spawn_data["level_25_30"]
+    else:
+        weights = spawn_data["level_30_plus"]
+    
+    return weights
+
 def check_collision_with_enemies(player):
     """Custom collision detection using smaller collision rectangles"""
     colliding_enemies = []
@@ -726,7 +844,7 @@ player = Player()
 all_sprites.add(player)
 
 spawn_timer = 0
-base_spawn_interval = 3
+base_spawn_interval = SPAWN_CONFIG["base_spawn_interval"]
 
 game_state = "playing"
 game_result = None
@@ -783,11 +901,19 @@ while running:
     if game_state == "playing":
         all_sprites.update(dt)
 
-        # Spawn rate changes to 0.5 after level 30
-        if player.level >= 30:
-            spawn_interval = 0.35
+        # Check if devil boss is active
+        devil_active = any(enemy.enemy_type == "boss" and enemy.boss_name == "devil" for enemy in enemies)
+        
+        # Spawn rate changes based on level and devil battle using config
+        if devil_active:
+            spawn_interval = SPAWN_CONFIG["devil_battle_interval"]
+        elif player.level >= 30:
+            spawn_interval = SPAWN_CONFIG["level_30_interval"]
         else:
-            spawn_interval = max(.6, base_spawn_interval - 0.3 * (player.level - 1))
+            spawn_interval = max(
+                SPAWN_CONFIG["min_spawn_interval"], 
+                base_spawn_interval - SPAWN_CONFIG["spawn_reduction_per_level"] * (player.level - 1)
+            )
         spawn_timer += dt
         if spawn_timer >= spawn_interval:
             spawn_timer = 0
@@ -801,25 +927,11 @@ while running:
             else:
                 pos = (screen_width + 20, random.randint(0, screen_height))
             
-            # Determine enemy type based on player level and kill count
-            if player.kill_count >= 500:
-                # After kill 500, include mini-devils in spawning
-                if player.level < 5: enemy_type = random.choices(["zombie", "vampire", "golem", "mini-devil"], weights=[85, 15, 0, 10], k=1)[0]
-                elif player.level < 10: enemy_type = random.choices(["zombie", "vampire", "golem", "mini-devil"], weights=[60, 20, 10, 10], k=1)[0]
-                elif player.level < 15: enemy_type = random.choices(["zombie", "vampire", "golem", "mini-devil"], weights=[40, 30, 15, 15], k=1)[0]
-                elif player.level < 20: enemy_type = random.choices(["zombie", "vampire", "golem", "mini-devil"], weights=[15, 45, 20, 20], k=1)[0]
-                elif player.level < 25: enemy_type = random.choices(["zombie", "vampire", "golem", "mini-devil"], weights=[5, 5, 40, 50], k=1)[0]
-                elif player.level < 30: enemy_type = random.choices(["zombie", "vampire", "golem", "mini-devil"], weights=[0, 25, 25, 50], k=1)[0]
-                else: enemy_type = random.choices(["zombie", "vampire", "golem", "mini-devil"], weights=[0, 20, 10, 70], k=1)[0]
-            else:
-                # Before kill 500, no mini-devils
-                if player.level < 5: enemy_type = random.choices(["zombie", "vampire", "golem"], weights=[95, 5, 0], k=1)[0]
-                elif player.level < 10: enemy_type = random.choices(["zombie", "vampire", "golem"], weights=[70, 20, 10], k=1)[0]
-                elif player.level < 15: enemy_type = random.choices(["zombie", "vampire", "golem"], weights=[50, 40, 10], k=1)[0]
-                elif player.level < 20: enemy_type = random.choices(["zombie", "vampire", "golem"], weights=[20, 60, 20], k=1)[0]
-                elif player.level < 25: enemy_type = random.choices(["zombie", "vampire", "golem"], weights=[10, 10, 80], k=1)[0]
-                elif player.level < 30: enemy_type = random.choices(["zombie", "vampire", "golem"], weights=[0, 70, 30], k=1)[0]
-                else: enemy_type = random.choices(["zombie", "vampire", "golem"], weights=[0, 50, 50], k=1)[0]
+            # Determine enemy type based on player level and kill count using config
+            weights = get_enemy_spawn_weights(player.level, player.kill_count)
+            enemy_types = list(weights.keys())
+            enemy_weights = list(weights.values())
+            enemy_type = random.choices(enemy_types, weights=enemy_weights, k=1)[0]
             
             enemy = Enemy(pos, enemy_type, player.level)
             all_sprites.add(enemy)
@@ -891,8 +1003,8 @@ while running:
                     projectile.hit_enemies.clear()
                     projectile.angle -= 2 * math.pi
             else:
-                # Skip fireball and snake vs enemy collision - boss projectiles only hit the player
-                if isinstance(projectile, (Fireball, Snake)):
+                # Skip fireball, snake, and tree vs enemy collision - boss projectiles only hit the player
+                if isinstance(projectile, (Fireball, Snake, Tree)):
                     continue
                     
                 hits = pygame.sprite.spritecollide(projectile, enemies, False)
@@ -986,9 +1098,9 @@ while running:
             damage = total_damage_rate * dt
             player.take_damage(damage)
 
-        # Player vs Fireballs and Snakes - Check if player gets hit by boss projectiles
+        # Player vs Fireballs, Snakes, and Trees - Check if player gets hit by boss projectiles
         for projectile in projectiles:
-            if isinstance(projectile, (Fireball, Snake)):
+            if isinstance(projectile, (Fireball, Snake, Tree)):
                 if player.collision_rect.colliderect(projectile.rect):
                     player.take_damage(projectile.damage)
                     projectile.kill()
@@ -1145,3 +1257,5 @@ while running:
     pygame.display.flip()
 
 pygame.quit()
+
+
