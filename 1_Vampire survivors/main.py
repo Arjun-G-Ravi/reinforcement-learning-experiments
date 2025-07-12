@@ -2,7 +2,7 @@ import pygame
 import random
 import math
 from pygame.math import Vector2
-from config import ENEMY_STATS, BOSS_STATS, ITEM_STATS, DROP_PROBABILITIES, upgrade_gun, upgrade_blob, upgrade_heavy, SPAWN_CONFIG, ENEMY_SPAWN_WEIGHTS
+from config import ENEMY_STATS, BOSS_STATS, ITEM_STATS, DROP_PROBABILITIES, upgrade_gun, upgrade_blob, upgrade_heavy, SPAWN_CONFIG, ENEMY_SPAWN_WEIGHTS, BOSS_SPAWN_CONFIG
 
 # Initialize Pygame
 pygame.init()
@@ -758,6 +758,13 @@ def get_enemy_spawn_weights(player_level, kill_count):
     
     return weights
 
+def check_boss_spawn(kill_count):
+    """Check if a boss should spawn based on kill count using config"""
+    if kill_count in BOSS_SPAWN_CONFIG:
+        boss_options = BOSS_SPAWN_CONFIG[kill_count]
+        return random.choice(boss_options)
+    return None
+
 def check_collision_with_enemies(player):
     """Custom collision detection using smaller collision rectangles"""
     colliding_enemies = []
@@ -967,20 +974,8 @@ while running:
                             
                             player.kill_count += 1
                             
-                            # Boss spawning logic
-                            boss_name = None
-                            if player.kill_count == 50:
-                                boss_name = random.choice(["bigfoot", "minotaur", "monster"])
-                            elif player.kill_count == 150:
-                                boss_name = random.choice(["cyclops", "giant"])
-                            elif player.kill_count == 250:
-                                boss_name = random.choice(["cerberus", "chimera"])
-                            elif player.kill_count == 350:
-                                boss_name = "medusa"
-                            elif player.kill_count == 351:
-                                boss_name = "echidna"
-                            elif player.kill_count == 500:
-                                boss_name = "devil"
+                            # Boss spawning logic using config
+                            boss_name = check_boss_spawn(player.kill_count)
                             
                             if boss_name:
                                 side = random.choice(['top', 'bottom', 'left', 'right'])
@@ -1037,20 +1032,8 @@ while running:
                             
                             player.kill_count += 1
                             
-                            # Boss spawning logic
-                            boss_name = None
-                            if player.kill_count == 50:
-                                boss_name = random.choice(["bigfoot", "minotaur", "monster"])
-                            elif player.kill_count == 150:
-                                boss_name = random.choice(["cyclops", "giant"])
-                            elif player.kill_count == 250:
-                                boss_name = random.choice(["cerberus", "chimera"])
-                            elif player.kill_count == 350:
-                                boss_name = "medusa"
-                            elif player.kill_count == 351:
-                                boss_name = "echidna"
-                            elif player.kill_count == 500:
-                                boss_name = "devil"
+                            # Boss spawning logic using config
+                            boss_name = check_boss_spawn(player.kill_count)
                             
                             if boss_name:
                                 side = random.choice(['top', 'bottom', 'left', 'right'])

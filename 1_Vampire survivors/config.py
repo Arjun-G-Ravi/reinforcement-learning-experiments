@@ -161,6 +161,16 @@ ENEMY_SPAWN_WEIGHTS = {
     }
 }
 
+# Boss spawn configuration - easily modify kill count requirements
+BOSS_SPAWN_CONFIG = {
+    50: ["bigfoot", "minotaur", "monster"],  # Random choice from this list
+    150: ["cyclops", "giant"],               # Random choice from this list
+    350: ["cerberus", "chimera"],            # Random choice from this list
+    500: ["medusa"],                         # Single boss
+    501: ["echidna"],                        # Single boss
+    700: ["devil"]                           # Final boss
+}
+
 # Weapon upgrades
 upgrade_gun = {
     1: {"damage": 5, "cooldown": 2},
